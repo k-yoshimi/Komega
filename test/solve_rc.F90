@@ -155,12 +155,16 @@ SUBROUTINE generate_system()
   !
   IMPLICIT NONE
   !
-  INTEGER :: idim, iz
+  INTEGER :: idim, iz, seedsize
+  INTEGER,ALLOCATABLE :: seed(:)
   REAL(8) :: ham_r(ndim,ndim), rhs_r(ndim), ham_i(ndim,ndim), rhs_i(ndim), rnd(rnd_seed)
   COMPLEX(8) :: ham0(ndim,ndim)
   CHARACTER(100) :: cndim, form
   !
-  CALL RANDOM_NUMBER(rnd(1:rnd_seed))
+  CALL random_seed(size=seedsize)
+  ALLOCATE(seed(seedsize))
+  seed(:) = rnd_seed
+  CALL random_seed(put=seed)
   !
   WRITE(*,*)
   WRITE(*,*) "#####  Generate Linear System  #####"
@@ -201,7 +205,7 @@ SUBROUTINE generate_system()
   WRITE(*,*) "  Right Hand Side Vector :"
   WRITE(*,form) rhs(1:ndim)
   !
-  !WRITE(*,*) 
+  !WRITE(*,*)
   !WRITE(*,*) "  Matrix :"
   !DO idim = 1, ndim
   !   WRITE(*,form) ham(1:ndim,idim)
