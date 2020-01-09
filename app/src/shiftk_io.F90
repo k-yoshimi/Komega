@@ -42,9 +42,9 @@ SUBROUTINE shiftk_init()
   CHARACTER(256) :: fname
   INTEGER ierr, iargc
   !
-  if(iargc() /= 2) then
+  if(iargc() /= 1) then
      write(*,*) "Argument error. Usage: "
-     write(*,*) "ShiftK.out namelist.def [lBiCG | COCG | shifted_qmr_sym | shifted_qmr_sym_b]"
+     write(*,*) "ShiftK.out namelist.def"
      stop
   end if
   !
@@ -64,7 +64,6 @@ SUBROUTINE shiftk_init()
      stdout = 6
      !
      call getarg(1, fname)
-     CALL getarg(2, solver)
      OPEN(inpunit, file = TRIM(fname), status = "OLD", iostat = ierr)
      !
      IF(ierr /= 0) THEN
@@ -75,12 +74,6 @@ SUBROUTINE shiftk_init()
         STOP
      ELSE
         WRITE(*,*) "  Open input file ", TRIM(fname)
-     END IF
-
-     IF (TRIM(solver) /= "lBiCG" .AND. TRIM(solver) /= "COCG" .AND. &
-             & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
-        WRITE(*, *) "The algorithm is not implemented."
-        STOP
      END IF
      !
   ELSE
@@ -226,15 +219,16 @@ SUBROUTINE input_parameter_cg()
 #if defined(__MPI)
   USE mpi, only : MPI_COMM_WORLD, MPI_INTEGER
 #endif
-  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit
+  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit, solver
   !
   IMPLICIT NONE
   !
   INTEGER :: convfactor
+  CHARACTER(20) :: method
 #if defined(__MPI)
   INTEGER ierr
 #endif
-  NAMELIST /cg/ maxloops, convfactor
+  NAMELIST /cg/ maxloops, convfactor, method
   !
   maxloops = ndim
   convfactor = 8
@@ -248,11 +242,24 @@ SUBROUTINE input_parameter_cg()
   !
   threshold = 10d0**(-convfactor)
   !
+  !IF (TRIM(solver) /= "bicg" .AND. TRIM(solver) /= "cocg" .AND. &
+  !           & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
+  !    solver = "auto"
+  !END IF
+  !
   WRITE(stdout,*)
   WRITE(stdout,*) "##########  Input Parameter for CG Iteration ##########"
   WRITE(stdout,*)
-  WRITE(stdout,*) "  Maximum number of loop : ", maxloops
+  WRITE(stdout,*)        "  Maximum number of loop : ", maxloops
   WRITE(stdout,*) "   Convergence Threshold : ", threshold
+  IF (TRIM(method) == "bicg" .OR. TRIM(method) == "cocg" .OR. &
+             & TRIM(method) == "shifted_qmr_sym" .OR. TRIM(method) == "shifted_qmr_sym_b") THEN
+     IF(TRIM(method) /= TRIM(solver)) THEN
+         WRITE(stdout,*) "  Method is changed to ", TRIM(method), "."
+     ENDIF
+     solver = method
+  END IF
+  WRITE(stdout,*) "                  Method : ", solver
   !
   return
   !
@@ -402,23 +409,6 @@ SUBROUTINE input_hamiltonian()
   ALLOCATE(values(nham-ndiag), colind(nham-ndiag))
   !
   CALL QSORT(ham_indx(1,:), ham_indx(2,:), ham, ndiag+1, nham)
-!  DO iham = ndiag + 1, nham
-!     !
-!     DO jham = iham + 1, nham
-!        IF(ham_indx(1,iham) > ham_indx(1,jham)) THEN
-!           !
-!           ham_indx0(1:2) = ham_indx(1:2,jham)
-!           ham_indx(1:2,jham) = ham_indx(1:2,iham)
-!           ham_indx(1:2,iham) = ham_indx0(1:2)
-!           !
-!           ham0 = ham(jham)
-!           ham(jham) = ham(iham)
-!           ham(iham) = ham0
-!           !   
-!        END IF
-!     END DO
-!     !
-!  END DO
   !
   DO iham = 1, ndim
      rowcount(iham) = 0
@@ -486,13 +476,13 @@ SUBROUTINE input_hamiltonian()
   !
   ! Hermitian(BiCG) or Real-Symmetric(COCG)
   !
-!  IF(MAXVAL(ABS(AIMAG(ham(1:nham)))) > almost0) THEN
-!     WRITE(stdout,*) "  shifted_qmr_sym mathod is used."
-!     solver = "shifted_qmr_sym"
-!  ELSE
-!     WRITE(stdout,*) "  COCG mathod is used."
-!     solver = "COCG"
-!  END IF
+  IF(MAXVAL(ABS(AIMAG(ham(1:nham)))) > almost0) THEN
+     WRITE(stdout,*) "  BiCG mathod is used."
+     solver = "bicg"
+  ELSE
+     WRITE(stdout,*) "  COCG mathod is used."
+     solver = "cocg"
+  END IF
   !
 END SUBROUTINE input_hamiltonian
 !
@@ -595,9 +585,9 @@ subroutine input_hamiltonian_crs()
      do i = 0, nthreads-1
         row_se(1,i) =  0
         row_se(2,i) = -1
-	if(ne.lt.ndim) then
+        if(ne.lt.ndim) then
            num = 0
-	   ns = ne + 1
+           ns = ne + 1
            row_se(1,i) = ns
            do j = ns, ndim
               num = num + row_ptr(j+1) - row_ptr(j)
@@ -606,7 +596,7 @@ subroutine input_hamiltonian_crs()
                  exit
               end if
            end do
-	   if(j.lt.ndim) then
+           if(j.lt.ndim) then
               ne = j
            else
               ne = ndim
@@ -631,13 +621,13 @@ subroutine input_hamiltonian_crs()
   !
   ! Hermitian(BiCG) or Real-Symmetric(COCG)
   !
-!  IF(MAXVAL(ABS(AIMAG(ham_crs_val(1:numd)))) > almost0) THEN
-!     WRITE(stdout,*) "  shifted_qmr_sym mathod is used."
-!     solver = "shifted_qmr_sym"
-!  ELSE
-!     WRITE(stdout,*) "  COCG mathod is used."
-!     solver = "COCG"
-!  END IF
+  IF(MAXVAL(ABS(AIMAG(ham_crs_val(1:numd)))) > almost0) THEN
+     WRITE(stdout,*) "  BiCG is used."
+     solver = "bicg"
+  ELSE
+     WRITE(stdout,*) "  COCG mathod is used."
+     solver = "cocg"
+  END IF
   !
 end subroutine input_hamiltonian_crs
 !!
