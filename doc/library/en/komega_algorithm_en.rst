@@ -25,9 +25,9 @@ written as :math:`N_L` (:math:`N_R`).
 
 The following methods can be selected.
 
-- QMR_SYM method :ref:`[3] <ref>`
+- Shifted QMR_SYM method :ref:`[3] <ref>`
 
-- QMR_SYM(B) method :ref:`[3] <ref>`
+- Shifted QMR_SYM(B) method :ref:`[3] <ref>`
 
 The details of each algorithm are written as follows.
 
@@ -227,8 +227,15 @@ do :math:`j = 1 \cdots N_R`
 
 end do :math:`j`
 
-QMR_SYM method
-------------------
+Shifted QMR_SYM method
+------------------------
+
+In shifted QMR_SYM method, we consider the solution of following linear systems.
+
+:math:`(A+\sigma_{\ell}I)\boldsymbol{x}^{(\ell)}=\boldsymbol{b}, \ell=1,2,\cdots`
+
+In the above equation, :math:`A` is ::math:`NxN` complex symmetric matrix,
+:math:`\sigma_{\ell} \in \mathbb{C}, \boldsymbol{x}^{(\ell)}, \boldsymbol{b} \in \mathbb{C}^N`.
 
 :math:`\boldsymbol{x}_{0}^{(\ell)}=\boldsymbol{p}_{-1}^{(\ell)}=\boldsymbol{p}_{0}^{(\ell)}=0, \boldsymbol{v}_{1}=\boldsymbol{b}/(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}, g_{1}^{(\ell)}=(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}` 
 
@@ -280,8 +287,8 @@ do :math:`n = 1, 2, \cdots`
 
 end do :math:`n`
 
-QMR_SYM(B) method
---------------------
+Shifted QMR_SYM(B) method
+---------------------------
 
 :math:`\boldsymbol{x}_{0}^{(\ell)}=\boldsymbol{p}_{-1}^{(\ell)}=\boldsymbol{p}_{0}^{(\ell)}=0, \boldsymbol{v}_{1}=\boldsymbol{b}/(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}, g_{1}^{(\ell)}=(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}` 
 

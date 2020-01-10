@@ -23,9 +23,9 @@
 
 上記以外にも, 以下の手法を選択する事が可能となっている. 
 
-- QMR_SYM法 :ref:`[3] <ref>`
+- Shifted QMR_SYM法 :ref:`[3] <ref>`
 
-- QMR_SYM(B)法 :ref:`[3] <ref>`
+- Shifted QMR_SYM(B)法 :ref:`[3] <ref>`
 
 以下,各手法のアルゴリズムを記載する.
 
@@ -223,10 +223,10 @@ do :math:`j = 1 \cdots N_R`
 
 end do :math:`j`
 
-QMR_SYM法
-----------
+Shifted QMR_SYM法
+-------------------
 
-QMR_SYM法では, 以下の線型方程式の計算を実行する.
+Shifted QMR_SYM法では, 以下の線型方程式の計算を実行する.
 
 :math:`(A+\sigma_{\ell}I)\boldsymbol{x}^{(\ell)}=\boldsymbol{b}, \ell=1,2,\cdots`
 
@@ -284,8 +284,8 @@ do :math:`n = 1, 2, \cdots`
 
 end do :math:`n`
 
-QMR_SYM(B)法
---------------
+Shifted QMR_SYM(B)法
+---------------------
 
 :math:`\boldsymbol{x}_{0}^{(\ell)}=\boldsymbol{p}_{-1}^{(\ell)}=\boldsymbol{p}_{0}^{(\ell)}=0, \boldsymbol{v}_{1}=\boldsymbol{b}/(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}, g_{1}^{(\ell)}=(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}` 
 
