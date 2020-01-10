@@ -255,6 +255,10 @@ SUBROUTINE input_parameter_cg()
   IF (TRIM(method) == "bicg" .OR. TRIM(method) == "cocg" .OR. &
              & TRIM(method) == "shifted_qmr_sym" .OR. TRIM(method) == "shifted_qmr_sym_b") THEN
      IF(TRIM(method) /= TRIM(solver)) THEN
+         IF(TRIM(solver) == "bicg") THEN
+            WRITE(stdout, *) "COCG, QMR_SYM, and QMR_SYM(B) cannot be used for complex Hermitian"
+            STOP
+         ENDIF
          WRITE(stdout,*) "  Method is changed to ", TRIM(method), "."
      ENDIF
      solver = method
