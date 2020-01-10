@@ -23,7 +23,7 @@ For above methods, seed switching :ref:`[2] <ref>` is adopted.
 Hereafter, the number of the left (right) side vector is
 written as :math:`N_L` (:math:`N_R`).
 
-The following methods can be selected by explicitly specifying them in "cg" area of the input file.
+The following methods can be selected.
 
 - QMR_SYM method :ref:`[3] <ref>`
 

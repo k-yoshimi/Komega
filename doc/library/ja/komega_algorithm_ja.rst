@@ -21,8 +21,7 @@
 いずれの場合も Seed switching :ref:`[2] <ref>` を行う. 左ベクトルが :math:`N_L` 個,
 右ベクトルが :math:`N_R` 個(典型的には1個)あるとする. 
 
-上記以外にも, 入力ファイルのcgのエリアでmethodを明示的に指定する事で
-以下の手法を選択する事が可能となっている. 
+上記以外にも, 以下の手法を選択する事が可能となっている. 
 
 - QMR_SYM法 :ref:`[3] <ref>`
 
@@ -226,6 +225,14 @@ end do :math:`j`
 
 QMR_SYM法
 ----------
+
+QMR_SYM法では, 以下の線型方程式の計算を実行する.
+
+:math:`(A+\sigma_{\ell}I)\boldsymbol{x}^{(\ell)}=\boldsymbol{b}, \ell=1,2,\cdots`
+
+上記で :math:`A` は ::math:`NxN` の複素対称行列, 
+:math:`\sigma_{\ell} \in \mathbb{C}, \boldsymbol{x}^{(\ell)}, \boldsymbol{b} \in \mathbb{C}^N`, 
+となっている.
 
 :math:`\boldsymbol{x}_{0}^{(\ell)}=\boldsymbol{p}_{-1}^{(\ell)}=\boldsymbol{p}_{0}^{(\ell)}=0, \boldsymbol{v}_{1}=\boldsymbol{b}/(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}, g_{1}^{(\ell)}=(\boldsymbol{b}^{T}\boldsymbol{b})^{1/2}` 
 

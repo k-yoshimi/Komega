@@ -490,25 +490,65 @@ END SUBROUTINE input_hamiltonian
 !
 subroutine input_hamiltonian_crs()
   !$ use omp_lib
-  use shiftk_vals,only : ndim,inham,solver,almost0,stdout
+  use shiftk_vals,only : ndim,inham,solver,almost0,stdout,nproc
   use ham_vals,only : row_ptr,col_ind,ham_crs_val,row_se
   implicit none
-  integer :: fi=10
+  integer :: fi=10, i_max=100, ndim2, jerr
   integer :: i,j,n,idim,jdim,nham,ie,ns,ne,numd,num,numham,numlim,nthreads
   integer,allocatable :: irow(:),jcol(:)
   complex(kind(0.0D0)),allocatable :: vval(:)
   double precision :: rval,cval,t01,t02
-  logical :: lbal
+  logical :: lbal, real_data
+  character(len=1000) :: ctmp
   !
   write(stdout,*)
   write(stdout,*) "##########  Input Hamiltonian  ##########"
   write(stdout,*)
   !
-  !$ t01 = omp_get_wtime()
+  IF(nproc /= 1) THEN
+     WRITE(*,*) "ERROR ! MPI is not available in this mode."
+#if defined(__MPI)
+     CALL MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
+#endif
+     STOP
+  END IF
   !
   open(fi,file=trim(inham))
-  read(fi,*)
-  read(fi,*) idim,jdim,nham
+  !read(fi,*)
+  !read(fi,*) idim,jdim,nham
+  DO i=1,i_max
+    IF (i == i_max) THEN
+      WRITE(stdout,*) "ERROR in Hamiltonian data file:max count error"
+    ENDIF
+    ctmp=''
+    READ(fi, '(a)', iostat=jerr) ctmp
+    IF (JERR /= 0) THEN
+      WRITE(stdout,*) "ERROR in Hamiltonian data file:READ error"
+      STOP
+    ENDIF
+    WRITE(stdout,*) "FILE HEADER:", trim(ctmp)
+    IF ( INDEX(ctmp, '%') == 1 ) THEN
+       IF ( INDEX(ctmp, '%%') == 1 ) THEN
+          real_data = .false.
+          IF ( INDEX(ctmp, 'real') /= 1 ) real_data = .true.
+          IF ( INDEX(ctmp, 'REAL') /= 1 ) real_data = .true.
+          IF (real_data) THEN
+            WRITE(stdout,*) "Hamiltonian data type: real variable"
+          ELSE
+            WRITE(stdout,*) "Hamiltonian data type: complex variable"
+          ENDIF
+       ENDIF
+       CYCLE
+    ELSE
+      READ(ctmp,*,iostat=jerr) idim, jdim, nham
+      IF (JERR /= 0) THEN
+        WRITE(stdout,*) "ERROR in Hamiltonian data file:set dimensions"
+        WRITE(stdout,*) "FILE LINE:", trim(ctmp)
+        STOP
+      ENDIF
+      EXIT
+    ENDIF
+  ENDDO
   !
   write(stdout,*) "          Dim. of Hamiltonian : ",idim,jdim
   write(stdout,*) "  Num. of Non-Zero Components : ",nham
