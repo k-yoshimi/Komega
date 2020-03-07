@@ -27,16 +27,22 @@ MODULE komega_shifted_qmr_sym
   !
   PUBLIC komega_shifted_qmr_sym_init, komega_shifted_qmr_sym_restart, komega_shifted_qmr_sym_update, &
   & komega_shifted_qmr_sym_getcoef, komega_shifted_qmr_sym_getvec, komega_shifted_qmr_sym_finalize, &
-  &komega_shifted_qmr_sym_getresidual, komega_shifted_qmr_sym_output_restart, &
+  & komega_shifted_qmr_sym_getresidual, komega_shifted_qmr_sym_output_restart, &
   & komega_shifted_qmr_sym_init_restart, komega_shifted_qmr_getresidual
   !
 CONTAINS
 !
 ! Allocate & initialize variables
 !
-SUBROUTINE komega_shifted_qmr_sym_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0)
+#if defined(__MPI)
+SUBROUTINE komega_shifted_qmr_sym_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0, comm0) BIND(C)
+#else
+SUBROUTINE komega_shifted_qmr_sym_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0) BIND(C)
+#endif
+  !
+  USE ISO_C_BINDING
   USE komega_parameter, ONLY : iter, itermax, ndim, nl, nz, &
-  &                            threshold, iz_seed, lz_conv
+  &                            threshold, iz_seed, lz_conv, lmpi, comm
   USE komega_vals_shifted_qmr_sym, ONLY : alpha_n, beta_n, beta_nmin1, c_n, c_nmin1, c_nmin2, g_n, &
          & g_npls1, p_n, p_nmin1, p_nmin2, r_nmin1, s_n, s_nmin1, s_nmin2, t_n_n, t_nmin1_n, t_nmin2_n, &
          & t_npls1_n, w_n, w_nmin1, x_nmin1, b, res_fast, t_nmin2_nmin2, t_nmin1_nmin1, &
@@ -50,11 +56,21 @@ SUBROUTINE komega_shifted_qmr_sym_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0
   COMPLEX(8),INTENT(IN) :: z0(nz0)
   COMPLEX(8),INTENT(IN) :: b0(nl0)
   COMPLEX(8),INTENT(OUT) :: x(nl0,nz0), v_n(nl0)
+#if defined(__MPI)
+  INTEGER(C_INT),INTENT(IN) :: comm0
+#endif
   ndim = ndim0
   nl = nl0
   nz = nz0
   itermax = itermax0
   threshold = threshold0
+  !
+  comm = 0
+  lmpi = .FALSE.
+#if defined(__MPI)
+  comm = comm0
+  lmpi = .TRUE.
+#endif
   !
   ALLOCATE(z(nz), c_n(nz), c_nmin1(nz), c_nmin2(nz), g_n(nz), g_npls1(nz), p_n(nl, nz), p_nmin1(nl, nz),&
           & p_nmin2(nl, nz), r_nmin1(nz), s_n(nz), &
@@ -304,7 +320,6 @@ SUBROUTINE komega_shifted_qmr_sym_output_restart(Av_n, v_n, fo, filename)
   !
   WRITE(*,*) "  Restart File is written."
   !
-
 END SUBROUTINE
 !
 SUBROUTINE komega_shifted_qmr_sym_init_restart(ndim0, nl0, nz0, x, z0, b0, itermax0, threshold0,&

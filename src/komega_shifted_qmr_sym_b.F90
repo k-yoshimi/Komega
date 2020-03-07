@@ -33,9 +33,13 @@ CONTAINS
 !
 ! Allocate & initialize variables
 !
-SUBROUTINE komega_shifted_qmr_sym_b_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0)
+#if defined(__MPI)
+SUBROUTINE komega_shifted_qmr_sym_b_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0, comm0) BIND(C)
+#else
+SUBROUTINE komega_shifted_qmr_sym_b_init(ndim0, nl0, nz0, x, v_n, z0, b0, itermax0, threshold0) BIND(C)
+#endif
   USE komega_parameter, ONLY : iter, itermax, ndim, nl, nz, &
-  &                            threshold, iz_seed, lz_conv
+  &                            threshold, iz_seed, lz_conv, lmpi, comm
   USE komega_vals_shifted_qmr_sym_b, ONLY : alpha_n, beta_n, beta_nmin1, g_n, &
          & g_npls1, f_n, f_nmin1, p_n, p_nmin1, r_n, t_n_n, t_nmin1_n, &
          & t_npls1_n, x_nmin1, b, t_nmin1_nmin1, &
@@ -49,11 +53,22 @@ SUBROUTINE komega_shifted_qmr_sym_b_init(ndim0, nl0, nz0, x, v_n, z0, b0, iterma
   COMPLEX(8),INTENT(IN) :: z0(nz0)
   COMPLEX(8),INTENT(IN) :: b0(nl0)
   COMPLEX(8),INTENT(OUT) :: x(nl0,nz0), v_n(nl0)
+#if defined(__MPI)
+  INTEGER(C_INT),INTENT(IN) :: comm0
+#endif
+  !
   ndim = ndim0
   nl = nl0
   nz = nz0
   itermax = itermax0
   threshold = threshold0
+  !
+  comm = 0
+  lmpi = .FALSE.
+#if defined(__MPI)
+  comm = comm0
+  lmpi = .TRUE.
+#endif
   !
   ALLOCATE(z(nz), g_n(nz), g_npls1(nz), p_n(nl, nz), p_nmin1(nl, nz),&
           & r_n(nz), f_n(nz), f_nmin1(nz), &
