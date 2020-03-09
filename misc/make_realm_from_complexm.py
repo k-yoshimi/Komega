@@ -89,6 +89,15 @@ def make_realm_from_complexm(infile, outfile, OUT_STD=False):
     mmwrite(outfile, b)
 
 if __name__ == '__main__':
-    infile = "test.mtx"
-    outfile = "output.mtx"
-    make_realm_from_complexm(infile, outfile, OUT_STD=True)
+    from argparse import ArgumentParser
+    argparser = ArgumentParser()
+    argparser.add_argument("input_mm", type=str,
+                           help="input matrix file")
+    argparser.add_argument("output_mm", type=str,
+                           help="output matrix file")
+    argparser.add_argument("--verbose", dest="verb", action="store_const",
+                           const=True, default=False,
+                           help="write additional information")
+    args = argparser.parse_args()
+
+    make_realm_from_complexm(args.input_mm, args.output_mm, OUT_STD=args.verb)
