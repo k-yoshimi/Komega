@@ -4,6 +4,20 @@ from scipy.io import mmread, mmwrite
 from scipy.sparse import coo_matrix
 
 def make_realm_from_complexm(infile, outfile, OUT_STD=False):
+    """
+    This function outputs real symmetric matrix from complex hermitian matrix.
+    This is based on the method of S. Jin et al. (2017).
+
+    Parameters
+    ----------
+    infile : str
+        Input file of complex hermitian matrix (matrix market format).
+    outfile : str
+        Output file of real symmetric matrix (matrix market format).
+    OUT_STD : bool, default False
+        Flag of standard output.
+        If this is True, the program writes additional information.
+    """
     # Read file of Matrix Market format, and get rank of matrix
     # (Asume rank of matrix is in the second line)
     if OUT_STD:
