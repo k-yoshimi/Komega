@@ -44,7 +44,7 @@ SUBROUTINE shiftk_init()
   !
   if(iargc() /= 2) then
      write(*,*) "Argument error. Usage: "
-     write(*,*) "ShiftK.out namelist.def [lBiCG | COCG | shifted_qmr_sym | shifted_qmr_sym_b]"
+     write(*,*) "ShiftK.out namelist.def [bicg | cocg | shifted_qmr_sym | shifted_qmr_sym_b]"
      stop
   end if
   !
@@ -77,7 +77,7 @@ SUBROUTINE shiftk_init()
         WRITE(*,*) "  Open input file ", TRIM(fname)
      END IF
 
-     IF (TRIM(solver) /= "lBiCG" .AND. TRIM(solver) /= "COCG" .AND. &
+     IF (TRIM(solver) /= "bicg" .AND. TRIM(solver) /= "cocg" .AND. &
              & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
         WRITE(*, *) "The algorithm is not implemented."
         STOP
@@ -841,7 +841,7 @@ SUBROUTINE input_restart_vector()
   !
   ! Last two Shadow residual vectors (Only for BiCG)
   !
-  IF(solver == "lBiCG") THEN
+  IF(solver == "bicg") THEN
      DO idim = 1, ndim
         READ(fi,*) v2_r, v2_i, v12_r, v12_i
         v4(idim) = CMPLX(v2_r, v2_i, KIND(0d0))
@@ -923,7 +923,7 @@ SUBROUTINE output_restart_vector()
      WRITE(fo,'(4e25.16)') v2(idim), v12(idim)
   END DO
   !
-  IF(solver == "lBiCG") THEN
+  IF(solver == "bicg") THEN
      DO idim = 1, ndim
         WRITE(fo,'(4e25.16)') v4(idim), v14(idim)
      END DO
