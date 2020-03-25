@@ -61,7 +61,9 @@ SUBROUTINE dyn()
   & iter, & ! Counter for Iteration
   & status(3), &
   & fres = 30, &
-  & iomega, ierr, ix
+  & iomega, ierr, ix, &
+  & time_clock1, &
+  & time_clock2, t_rate
   !
   REAL(8) :: res2norm(nomega), xx
 #if defined(__MPI)
@@ -75,7 +77,7 @@ SUBROUTINE dyn()
   COMPLEX(8),allocatable :: test_r(:,:,:) 
 #endif
   !
-  IF (TRIM(solver) == 'bicg' .OR. TRIM(solver) == 'cocg') THEN
+  IF (TRIM(solver) == 'lBiCG' .OR. TRIM(solver) == 'COCG') THEN
       nl = 1
   ELSE IF (TRIM(solver) == 'shifted_qmr_sym' .OR. TRIM(solver) == 'shifted_qmr_sym_b') THEN
       nl = ndim ! currently, shifted_qmr only works for nl = ndim
@@ -85,7 +87,7 @@ SUBROUTINE dyn()
 #endif
   !
   ALLOCATE(v12(ndim), v2(ndim), r_l(nl), x_l(nl,nomega))
-  IF(TRIM(solver) == "bicg") THEN
+  IF(TRIM(solver) == "lBiCG") THEN
     ALLOCATE(v14(ndim), v4(ndim))
   ELSE IF (TRIM(solver) == "shifted_qmr_sym" .OR. TRIM(solver) == 'shifted_qmr_sym_b') THEN
     ALLOCATE(v_n(ndim), Av_n(ndim))
@@ -109,7 +111,7 @@ SUBROUTINE dyn()
      WRITE(stdout,*)
      !
      IF(outrestart .EQV. .TRUE.) THEN
-        IF(TRIM(solver) == "bicg") THEN
+        IF(TRIM(solver) == "lBiCG") THEN
 #if defined(__MPI)
         CALL komega_BiCG_restart(ndim, nl, nomega, x_l, z, maxloops, threshold, status, &
            &                 iter_old, v2, v12, v4, v14, alpha, beta, z_seed, r_l_save, MPI_COMM_WORLD)
@@ -117,7 +119,7 @@ SUBROUTINE dyn()
            CALL komega_BiCG_restart(ndim, nl, nomega, x_l, z, maxloops, threshold, status, &
            &                 iter_old, v2, v12, v4, v14, alpha, beta, z_seed, r_l_save)
 #endif
-        ELSE IF (TRIM(solver) == "cocg") THEN
+        ELSE IF (TRIM(solver) == "COCG") THEN
 #if defined(__MPI)
            CALL komega_COCG_restart(ndim, nl, nomega, x_l, z, maxloops, threshold, status, &
            &                 iter_old, v2, v12,          alpha, beta, z_seed, r_l_save, MPI_COMM_WORLD)
@@ -135,7 +137,7 @@ SUBROUTINE dyn()
             STOP
         END IF
      ELSE
-         IF(TRIM(solver) == "bicg") THEN
+         IF(TRIM(solver) == "lBiCG") THEN
 #if defined(__MPI)
            CALL komega_BiCG_restart(ndim, nl, nomega, x_l, z, 0,        threshold, status, &
            &                 iter_old, v2, v12, v4, v14, alpha, beta, z_seed, r_l_save, MPI_COMM_WORLD)
@@ -143,7 +145,7 @@ SUBROUTINE dyn()
            CALL komega_BiCG_restart(ndim, nl, nomega, x_l, z, 0,        threshold, status, &
            &                 iter_old, v2, v12, v4, v14, alpha, beta, z_seed, r_l_save)
 #endif
-        ELSE IF(TRIM(solver) == "cocg") THEN
+        ELSE IF(TRIM(solver) == "COCG") THEN
 #if defined(__MPI)
            CALL komega_COCG_restart(ndim, nl, nomega, x_l, z, 0,        threshold, status, &
            &                 iter_old, v2, v12,          alpha, beta, z_seed, r_l_save, MPI_COMM_WORLD)
@@ -174,16 +176,16 @@ SUBROUTINE dyn()
      WRITE(stdout,*)
      !
      v2(1:ndim) = rhs(1:ndim)
-     IF(TRIM(solver) == 'bicg') v4(1:ndim) = rhs(1:ndim)
+     IF(TRIM(solver) == 'lBiCG') v4(1:ndim) = rhs(1:ndim)
      !
      IF(outrestart .EQV. .TRUE.) THEN
-         IF(TRIM(solver) == 'bicg') THEN
+         IF(TRIM(solver) == 'lBiCG') THEN
 #if defined(__MPI)
            CALL komega_BiCG_init(ndim, nl, nomega, x_l, z, maxloops, threshold, MPI_COMM_WORLD)
 #else
            CALL komega_BiCG_init(ndim, nl, nomega, x_l, z, maxloops, threshold)
 #endif
-        ELSE IF(TRIM(solver) == 'cocg') THEN
+        ELSE IF(TRIM(solver) == 'COCG') THEN
 #if defined(__MPI)
            CALL komega_COCG_init(ndim, nl, nomega, x_l, z, maxloops, threshold, MPI_COMM_WORLD)
 #else
@@ -198,7 +200,7 @@ SUBROUTINE dyn()
              STOP
         END IF
      ELSE
-        IF(TRIM(solver) == 'bicg') THEN
+        IF(TRIM(solver) == 'BiCG') THEN
 #if defined(__MPI)
            CALL komega_BiCG_init(ndim, nl, nomega, x_l, z, 0,        threshold, MPI_COMM_WORLD)
 #else
@@ -246,6 +248,7 @@ SUBROUTINE dyn()
   !$ t03 = 0.0D0
   !$ t13 = 0.0D0
 #endif
+  call system_clock(time_clock1)
   DO iter = 1, maxloops
      !
      ! Projection of Residual vector into the space
@@ -256,9 +259,9 @@ SUBROUTINE dyn()
      !
 #if defined(DEBUG)
      test_r(1:ndim,iter,1) = v2(1:ndim)
-     IF(TRIM(solver) == 'bicg') THEN
+     IF(TRIM(solver) == 'lBiCG') THEN
         test_r(1:ndim,iter,2) = v4(1:ndim)
-     ELSE IF (TRIM(solver) == 'cocg') THEN
+     ELSE IF (TRIM(solver) == 'COCG') THEN
         test_r(1:ndim,iter,2) = v2(1:ndim)
      END IF
 #endif
@@ -291,10 +294,10 @@ SUBROUTINE dyn()
      !$ t03 = t03 + (t02 - t01)
      !$ t13 = t13 + (t12 - t11)
      lcollect=.FALSE.
-     IF(TRIM(solver) == 'bicg') THEN
+     IF(TRIM(solver) == 'lBiCG') THEN
          CALL ham_prod(v2, v12, t11, t12, lcollect)
          CALL ham_prod(v4, v14, t11, t12, lcollect)
-     ELSE IF(TRIM(solver) == 'cocg') THEN
+     ELSE IF(TRIM(solver) == 'COCG') THEN
              CALL ham_prod(v2, v12, t11, t12, lcollect)
      ELSE IF(TRIM(solver) == 'shifted_qmr_sym' .OR. TRIM(solver) == 'shifted_qmr_sym_b') THEN
          CALL ham_prod(v_n, Av_n, t11, t12, lcollect)
@@ -308,9 +311,9 @@ SUBROUTINE dyn()
      t3 = t3 + (t2 - t1)
 #endif
      !
-     IF(TRIM(solver) == 'bicg') THEN
+     IF(TRIM(solver) == 'lBiCG') THEN
         CALL komega_BiCG_update(v12, v2, v14, v4, x_l, r_l, status)
-     ELSE IF (TRIM(solver) == 'cocg') THEN
+     ELSE IF (TRIM(solver) == 'COCG') THEN
         CALL komega_COCG_update(v12, v2,          x_l, r_l, status)
      ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
         CALL komega_shifted_qmr_sym_update(Av_n, v_n, x_l, status)
@@ -320,9 +323,9 @@ SUBROUTINE dyn()
         STOP
      END IF
      !
-     IF(TRIM(solver) == 'bicg') THEN
+     IF(TRIM(solver) == 'lBiCG') THEN
         CALL komega_BiCG_getresidual(res2norm)
-     ELSE IF (TRIM(solver) == 'cocg') THEN
+     ELSE IF (TRIM(solver) == 'COCG') THEN
         CALL komega_COCG_getresidual(res2norm)
      ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
         CALL komega_shifted_qmr_sym_getresidual(res2norm)
@@ -359,14 +362,17 @@ SUBROUTINE dyn()
      end if
 #endif
      !
-     IF (TRIM(solver) == 'bicg' .OR. TRIM(solver) == 'cocg') THEN
-         WRITE(stdout,'(i8,3i8,2e15.5)') iter, status, DBLE(v12(1)), ABS(r_l(1))
+     IF (TRIM(solver) == 'lBiCG' .OR. TRIM(solver) == 'COCG') THEN
+!         WRITE(stdout,'(i8,3i8,2e15.5)') iter, status, DBLE(v12(1)), ABS(r_l(1))
+         WRITE(*,*) iter, res2norm(:)
      ELSE IF (TRIM(solver) == 'shifted_qmr_sym' .OR. TRIM(solver) == 'shifted_qmr_sym_b') THEN
-         WRITE(stdout,'(i8,3i8,2e15.5)') iter, status, DBLE(v_n(1)), ABS(res2norm(1))
+         WRITE(*,*) iter, res2norm(:)
      END IF
      IF(status(1) < 0) EXIT
      !
   END DO
+  call system_clock(time_clock2, t_rate)
+  WRITE(stdout,*) "Iteration time:", dble(time_clock2-time_clock1)/t_rate
 #if defined(__MPI)
   CLOSE(10)
 #else
@@ -410,10 +416,10 @@ SUBROUTINE dyn()
      !
      ALLOCATE(alpha(iter_old), beta(iter_old), r_l_save(nl, iter_old))
      !
-     IF(TRIM(solver) == "bicg") THEN
+     IF(TRIM(solver) == "lBiCG") THEN
         CALL komega_BiCG_getcoef(alpha, beta, z_seed, r_l_save)
         CALL komega_BiCG_getvec(v12,v14)
-     ELSE IF(TRIM(solver) == "cocg") THEN
+     ELSE IF(TRIM(solver) == "COCG") THEN
         CALL komega_COCG_getcoef(alpha, beta, z_seed, r_l_save)
         CALL komega_COCG_getvec(v12)
      END IF
@@ -432,9 +438,9 @@ SUBROUTINE dyn()
   !
   ! Deallocate all intrinsic vectors
   !
-  IF(TRIM(solver) == 'bicg') THEN
+  IF(TRIM(solver) == 'lBiCG') THEN
      CALL komega_BiCG_finalize()
-  ELSE IF (TRIM(solver) == 'cocg') THEN
+  ELSE IF (TRIM(solver) == 'COCG') THEN
      CALL komega_COCG_finalize()
   ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
       CALL komega_shifted_qmr_sym_finalize()
@@ -451,7 +457,7 @@ SUBROUTINE dyn()
 #endif
   !
   DEALLOCATE(v12, v2, r_l, x_l, z)
-  IF(TRIM(solver) == "bicg") DEALLOCATE(v14, v4)
+  IF(TRIM(solver) == "lBiCG") DEALLOCATE(v14, v4)
   !
 END SUBROUTINE dyn
 !
