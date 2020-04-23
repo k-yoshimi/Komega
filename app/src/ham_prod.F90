@@ -52,6 +52,7 @@ MODULE ham_vals
   !
   integer,allocatable,save :: row_ptr(:),col_ind(:),row_se(:,:)
   complex(kind(0.0D0)),allocatable,save :: ham_crs_val(:)
+  real(8),allocatable,save :: ham_crs_val_r(:)
   !
 #if defined(__MPI)
   COMPLEX(8),ALLOCATABLE,SAVE :: &
@@ -85,10 +86,9 @@ SUBROUTINE ham_prod(veci,veco,t11,t12,lcollect)
   double precision,intent(OUT) :: t11,t12
   logical,intent(IN) :: lcollect
   !
-  double precision :: veci_real(ndim)
-  double precision :: veco_real(ndim)
-  !
   veco(1:ndim) = CMPLX(0d0, 0d0, KIND(0d0))
+  !
+  !WRITE(*,*) veci(1:10)
   !
   IF(inham == "") THEN
      CALL ham_prod_onthefly(veci,veco)
@@ -99,12 +99,7 @@ SUBROUTINE ham_prod(veci,veco,t11,t12,lcollect)
      !CALL ham_prod_compress_csr(veci,veco,t11,t12,lcollect)
         call ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
      ELSE
-        !call ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
-        veci_real(1:ndim) = REAL(veci(1:ndim))
-        call ham_prod_compress_crs_real(veci_real,veco_real,t11,t12,lcollect)
-        veco(1:ndim) = CMPLX(veco_real(1:ndim), 0d0, KIND(0d0))
-        !WRITE(*,*) veco(1:10)
-        !STOP
+        call ham_prod_compress_crs_r(veci,veco,t11,t12,lcollect)
      ENDIF
   END IF
   !
@@ -279,34 +274,36 @@ subroutine ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
 #endif
 end subroutine ham_prod_compress_crs
 !
-subroutine ham_prod_compress_crs_real(veci,veco,t11,t12,lcollect)
+subroutine ham_prod_compress_crs_r(veci,veco,t11,t12,lcollect)
   !$ use omp_lib
   use shiftk_vals,only : ndim
-  use ham_vals,only : row_ptr,col_ind,ham_crs_val,row_se
+  use ham_vals,only : row_ptr,col_ind,ham_crs_val_r,row_se
   implicit none
-  double precision,intent(IN ) :: veci(ndim)
-  double precision,intent(OUT) :: veco(ndim)
+  complex(kind(0.0D0)),intent(IN ) :: veci(ndim)
+  complex(kind(0.0D0)),intent(OUT) :: veco(ndim)
   double precision,intent(OUT) :: t11,t12
   logical,intent(IN) :: lcollect
   !
   integer :: i,j,ithread,is,ie
+  complex(kind(0.0D0)) :: czero
   !
 #if defined(__MPI)
-  write(*,*) "MPI version of subroutine ham_prod_compress_crs_real has not been made."
+  write(*,*) "MPI version of subroutine ham_prod_compress_crs_r has not been made."
   stop
 #else
   !
   !$ t11 = omp_get_wtime()
   !if(lcollect) call start_collection("region11")
   ithread = 0
-  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie)
+  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie,czero)
   !$ ithread = omp_get_thread_num()
   is = row_se(1,ithread)
   ie = row_se(2,ithread)
+  czero = cmplx(0.0D0,0.0D0,kind(0.0D0))
   do i = is, ie
-     veco(i) = 0.0D0
+     veco(i) = czero
      do j = row_ptr(i), row_ptr(i+1) - 1
-        veco(i) = veco(i) + DBLE(ham_crs_val(j)) * veci(col_ind(j))
+        veco(i) = veco(i) + ham_crs_val_r(j) * veci(col_ind(j))
      end do
   end do
   !$OMP END PARALLEL
@@ -314,7 +311,7 @@ subroutine ham_prod_compress_crs_real(veci,veco,t11,t12,lcollect)
   !$ t12 = omp_get_wtime()
   !
 #endif
-end subroutine ham_prod_compress_crs_real
+end subroutine ham_prod_compress_crs_r
 !
 ! Hamiltonian-vector product with On-The-Fly Hamiltonian generation
 !

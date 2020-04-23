@@ -292,6 +292,8 @@ SUBROUTINE input_parameter_dyn()
   nomega = 10
   omegamin = CMPLX(e_min, 0.01d0*(e_max - e_min), KIND(0d0))
   omegamax = CMPLX(e_max, 0.01d0*(e_max - e_min), KIND(0d0))
+  !omegamin = CMPLX(e_min, 0.d0, KIND(0d0))
+  !omegamax = CMPLX(e_max, 0.d0, KIND(0d0))
   outrestart = .FALSE.
   !
   IF(myrank == 0) READ(inpunit,dyn,err=100)
@@ -505,7 +507,7 @@ END SUBROUTINE input_hamiltonian
 subroutine input_hamiltonian_crs()
   !$ use omp_lib
   use shiftk_vals,only : ndim,inham,solver,almost0,stdout
-  use ham_vals,only : row_ptr,col_ind,ham_crs_val,row_se
+  use ham_vals,only : row_ptr,col_ind,ham_crs_val,ham_crs_val_r,row_se
   implicit none
   integer :: fi=10
   integer :: i,j,n,idim,jdim,nham,ie,ns,ne,numd,num,numham,numlim,nthreads
@@ -572,7 +574,7 @@ subroutine input_hamiltonian_crs()
      end if
   end do
   !
-  allocate(row_ptr(idim+1),col_ind(numd),ham_crs_val(numd))
+  allocate(row_ptr(idim+1),col_ind(numd),ham_crs_val(numd),ham_crs_val_r(numd))
   row_ptr(:)=-1
   do n=1,numd
      col_ind(n)=jcol(n)
@@ -580,6 +582,7 @@ subroutine input_hamiltonian_crs()
         row_ptr(irow(n))=n
      end if
      ham_crs_val(n)=vval(n)
+     ham_crs_val_r(n)=REAL(vval(n))
   end do
   row_ptr(idim+1)=n
   deallocate(irow,jcol,vval)
