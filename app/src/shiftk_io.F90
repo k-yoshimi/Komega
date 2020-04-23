@@ -42,9 +42,9 @@ SUBROUTINE shiftk_init()
   CHARACTER(256) :: fname
   INTEGER ierr, iargc
   !
-  if(iargc() /= 1) then
+  if(iargc() /= 2) then
      write(*,*) "Argument error. Usage: "
-     write(*,*) "ShiftK.out namelist.def"
+     write(*,*) "ShiftK.out namelist.def [lBiCG | COCG | shifted_qmr_sym | shifted_qmr_sym_b]"
      stop
   end if
   !
@@ -64,6 +64,9 @@ SUBROUTINE shiftk_init()
      stdout = 6
      !
      call getarg(1, fname)
+     CALL getarg(2, solver)
+     WRITE(*,*) "fname ", TRIM(fname)
+     WRITE(*,*) "solver ", TRIM(solver)
      OPEN(inpunit, file = TRIM(fname), status = "OLD", iostat = ierr)
      !
      IF(ierr /= 0) THEN
@@ -74,6 +77,12 @@ SUBROUTINE shiftk_init()
         STOP
      ELSE
         WRITE(*,*) "  Open input file ", TRIM(fname)
+     END IF
+
+     IF (TRIM(solver) /= "lBiCG" .AND. TRIM(solver) /= "COCG" .AND. &
+             & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
+        WRITE(*, *) "The algorithm is not implemented."
+        STOP
      END IF
      !
   ELSE
@@ -219,16 +228,17 @@ SUBROUTINE input_parameter_cg()
 #if defined(__MPI)
   USE mpi, only : MPI_COMM_WORLD, MPI_INTEGER
 #endif
-  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit, solver
+  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit
   !
   IMPLICIT NONE
   !
   INTEGER :: convfactor
-  CHARACTER(20) :: method
 #if defined(__MPI)
   INTEGER ierr
 #endif
-  NAMELIST /cg/ maxloops, convfactor, method
+  NAMELIST /cg/ maxloops, convfactor
+  !WRITE(*,*) "maxloops", maxloops
+  !WRITE(*,*) "convfactor", convfactor
   !
   maxloops = ndim
   convfactor = 8
@@ -242,28 +252,11 @@ SUBROUTINE input_parameter_cg()
   !
   threshold = 10d0**(-convfactor)
   !
-  !IF (TRIM(solver) /= "bicg" .AND. TRIM(solver) /= "cocg" .AND. &
-  !           & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
-  !    solver = "auto"
-  !END IF
-  !
   WRITE(stdout,*)
   WRITE(stdout,*) "##########  Input Parameter for CG Iteration ##########"
   WRITE(stdout,*)
-  WRITE(stdout,*)        "  Maximum number of loop : ", maxloops
+  WRITE(stdout,*) "  Maximum number of loop : ", maxloops
   WRITE(stdout,*) "   Convergence Threshold : ", threshold
-  IF (TRIM(method) == "bicg" .OR. TRIM(method) == "cocg" .OR. &
-             & TRIM(method) == "shifted_qmr_sym" .OR. TRIM(method) == "shifted_qmr_sym_b") THEN
-     IF(TRIM(method) /= TRIM(solver)) THEN
-         IF(TRIM(solver) == "bicg") THEN
-            WRITE(stdout, *) "COCG, QMR_SYM, and QMR_SYM(B) cannot be used for complex Hermitian"
-            STOP
-         ENDIF
-         WRITE(stdout,*) "  Method is changed to ", TRIM(method), "."
-     ENDIF
-     solver = method
-  END IF
-  WRITE(stdout,*) "                  Method : ", solver
   !
   return
   !
@@ -413,6 +406,23 @@ SUBROUTINE input_hamiltonian()
   ALLOCATE(values(nham-ndiag), colind(nham-ndiag))
   !
   CALL QSORT(ham_indx(1,:), ham_indx(2,:), ham, ndiag+1, nham)
+!  DO iham = ndiag + 1, nham
+!     !
+!     DO jham = iham + 1, nham
+!        IF(ham_indx(1,iham) > ham_indx(1,jham)) THEN
+!           !
+!           ham_indx0(1:2) = ham_indx(1:2,jham)
+!           ham_indx(1:2,jham) = ham_indx(1:2,iham)
+!           ham_indx(1:2,iham) = ham_indx0(1:2)
+!           !
+!           ham0 = ham(jham)
+!           ham(jham) = ham(iham)
+!           ham(iham) = ham0
+!           !   
+!        END IF
+!     END DO
+!     !
+!  END DO
   !
   DO iham = 1, ndim
      rowcount(iham) = 0
@@ -480,13 +490,13 @@ SUBROUTINE input_hamiltonian()
   !
   ! Hermitian(BiCG) or Real-Symmetric(COCG)
   !
-  IF(MAXVAL(ABS(AIMAG(ham(1:nham)))) > almost0) THEN
-     WRITE(stdout,*) "  BiCG mathod is used."
-     solver = "bicg"
-  ELSE
-     WRITE(stdout,*) "  COCG mathod is used."
-     solver = "cocg"
-  END IF
+!  IF(MAXVAL(ABS(AIMAG(ham(1:nham)))) > almost0) THEN
+!     WRITE(stdout,*) "  shifted_qmr_sym mathod is used."
+!     solver = "shifted_qmr_sym"
+!  ELSE
+!     WRITE(stdout,*) "  COCG mathod is used."
+!     solver = "COCG"
+!  END IF
   !
 END SUBROUTINE input_hamiltonian
 !
@@ -494,65 +504,25 @@ END SUBROUTINE input_hamiltonian
 !
 subroutine input_hamiltonian_crs()
   !$ use omp_lib
-  use shiftk_vals,only : ndim,inham,solver,almost0,stdout,nproc
+  use shiftk_vals,only : ndim,inham,solver,almost0,stdout
   use ham_vals,only : row_ptr,col_ind,ham_crs_val,row_se
   implicit none
-  integer :: fi=10, i_max=100, ndim2, jerr
+  integer :: fi=10
   integer :: i,j,n,idim,jdim,nham,ie,ns,ne,numd,num,numham,numlim,nthreads
   integer,allocatable :: irow(:),jcol(:)
   complex(kind(0.0D0)),allocatable :: vval(:)
   double precision :: rval,cval,t01,t02
-  logical :: lbal, real_data
-  character(len=1000) :: ctmp
+  logical :: lbal
   !
   write(stdout,*)
   write(stdout,*) "##########  Input Hamiltonian  ##########"
   write(stdout,*)
   !
-  IF(nproc /= 1) THEN
-     WRITE(*,*) "ERROR ! MPI is not available in this mode."
-#if defined(__MPI)
-     CALL MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
-#endif
-     STOP
-  END IF
+  !$ t01 = omp_get_wtime()
   !
   open(fi,file=trim(inham))
-  !read(fi,*)
-  !read(fi,*) idim,jdim,nham
-  DO i=1,i_max
-    IF (i == i_max) THEN
-      WRITE(stdout,*) "ERROR in Hamiltonian data file:max count error"
-    ENDIF
-    ctmp=''
-    READ(fi, '(a)', iostat=jerr) ctmp
-    IF (JERR /= 0) THEN
-      WRITE(stdout,*) "ERROR in Hamiltonian data file:READ error"
-      STOP
-    ENDIF
-    WRITE(stdout,*) "FILE HEADER:", trim(ctmp)
-    IF ( INDEX(ctmp, '%') == 1 ) THEN
-       IF ( INDEX(ctmp, '%%') == 1 ) THEN
-          real_data = .false.
-          IF ( INDEX(ctmp, 'real') /= 1 ) real_data = .true.
-          IF ( INDEX(ctmp, 'REAL') /= 1 ) real_data = .true.
-          IF (real_data) THEN
-            WRITE(stdout,*) "Hamiltonian data type: real variable"
-          ELSE
-            WRITE(stdout,*) "Hamiltonian data type: complex variable"
-          ENDIF
-       ENDIF
-       CYCLE
-    ELSE
-      READ(ctmp,*,iostat=jerr) idim, jdim, nham
-      IF (JERR /= 0) THEN
-        WRITE(stdout,*) "ERROR in Hamiltonian data file:set dimensions"
-        WRITE(stdout,*) "FILE LINE:", trim(ctmp)
-        STOP
-      ENDIF
-      EXIT
-    ENDIF
-  ENDDO
+  read(fi,*)
+  read(fi,*) idim,jdim,nham
   !
   write(stdout,*) "          Dim. of Hamiltonian : ",idim,jdim
   write(stdout,*) "  Num. of Non-Zero Components : ",nham
@@ -629,9 +599,9 @@ subroutine input_hamiltonian_crs()
      do i = 0, nthreads-1
         row_se(1,i) =  0
         row_se(2,i) = -1
-        if(ne.lt.ndim) then
+	if(ne.lt.ndim) then
            num = 0
-           ns = ne + 1
+	   ns = ne + 1
            row_se(1,i) = ns
            do j = ns, ndim
               num = num + row_ptr(j+1) - row_ptr(j)
@@ -640,7 +610,7 @@ subroutine input_hamiltonian_crs()
                  exit
               end if
            end do
-           if(j.lt.ndim) then
+	   if(j.lt.ndim) then
               ne = j
            else
               ne = ndim
@@ -665,13 +635,13 @@ subroutine input_hamiltonian_crs()
   !
   ! Hermitian(BiCG) or Real-Symmetric(COCG)
   !
-  IF(MAXVAL(ABS(AIMAG(ham_crs_val(1:numd)))) > almost0) THEN
-     WRITE(stdout,*) "  BiCG is used."
-     solver = "bicg"
-  ELSE
-     WRITE(stdout,*) "  COCG mathod is used."
-     solver = "cocg"
-  END IF
+!  IF(MAXVAL(ABS(AIMAG(ham_crs_val(1:numd)))) > almost0) THEN
+!     WRITE(stdout,*) "  shifted_qmr_sym mathod is used."
+!     solver = "shifted_qmr_sym"
+!  ELSE
+!     WRITE(stdout,*) "  COCG mathod is used."
+!     solver = "COCG"
+!  END IF
   !
 end subroutine input_hamiltonian_crs
 !!
