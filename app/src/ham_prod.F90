@@ -99,9 +99,12 @@ SUBROUTINE ham_prod(veci,veco,t11,t12,lcollect)
      !CALL ham_prod_compress_csr(veci,veco,t11,t12,lcollect)
         call ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
      ELSE
-        veci_real(1:ndim) = DBLE(veci(1:ndim))
+        !call ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
+        veci_real(1:ndim) = REAL(veci(1:ndim))
         call ham_prod_compress_crs_real(veci_real,veco_real,t11,t12,lcollect)
-        veco(1:ndim) = CMPLX(veco_real(1:ndim))
+        veco(1:ndim) = CMPLX(veco_real(1:ndim), 0d0, KIND(0d0))
+        !WRITE(*,*) veco(1:10)
+        !STOP
      ENDIF
   END IF
   !
@@ -287,7 +290,6 @@ subroutine ham_prod_compress_crs_real(veci,veco,t11,t12,lcollect)
   logical,intent(IN) :: lcollect
   !
   integer :: i,j,ithread,is,ie
-  complex(kind(0.0D0)) :: czero
   !
 #if defined(__MPI)
   write(*,*) "MPI version of subroutine ham_prod_compress_crs_real has not been made."
@@ -297,13 +299,12 @@ subroutine ham_prod_compress_crs_real(veci,veco,t11,t12,lcollect)
   !$ t11 = omp_get_wtime()
   !if(lcollect) call start_collection("region11")
   ithread = 0
-  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie,czero)
+  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie)
   !$ ithread = omp_get_thread_num()
   is = row_se(1,ithread)
   ie = row_se(2,ithread)
-  czero = cmplx(0.0D0,0.0D0,kind(0.0D0))
   do i = is, ie
-     veco(i) = czero
+     veco(i) = 0.0D0
      do j = row_ptr(i), row_ptr(i+1) - 1
         veco(i) = veco(i) + DBLE(ham_crs_val(j)) * veci(col_ind(j))
      end do

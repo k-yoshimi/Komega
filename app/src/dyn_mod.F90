@@ -173,6 +173,10 @@ SUBROUTINE dyn()
      WRITE(stdout,*) "##########  CG Initialization  ##########"
      WRITE(stdout,*)
      !
+     IF(TRIM(solver) /= 'bicg') THEN
+        rhs(1:ndim) = CMPLX(REAL(rhs(1:ndim)),0d0, KIND(0d0))
+     ENDIF
+     !
      v2(1:ndim) = rhs(1:ndim)
      IF(TRIM(solver) == 'bicg') v4(1:ndim) = rhs(1:ndim)
      !
@@ -295,7 +299,7 @@ SUBROUTINE dyn()
          CALL ham_prod(v2, v12, t11, t12, lcollect)
          CALL ham_prod(v4, v14, t11, t12, lcollect)
      ELSE IF(TRIM(solver) == 'cocg') THEN
-             CALL ham_prod(v2, v12, t11, t12, lcollect)
+         CALL ham_prod(v2, v12, t11, t12, lcollect)
      ELSE IF(TRIM(solver) == 'shifted_qmr_sym' .OR. TRIM(solver) == 'shifted_qmr_sym_b') THEN
          CALL ham_prod(v_n, Av_n, t11, t12, lcollect)
      ELSE
@@ -437,9 +441,9 @@ SUBROUTINE dyn()
   ELSE IF (TRIM(solver) == 'cocg') THEN
      CALL komega_COCG_finalize()
   ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
-      CALL komega_shifted_qmr_sym_finalize()
+     CALL komega_shifted_qmr_sym_finalize()
   ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
-      CALL komega_shifted_qmr_sym_finalize()
+     CALL komega_shifted_qmr_sym_finalize()
   END IF
   !
   ! Output to a file
