@@ -506,13 +506,14 @@ END SUBROUTINE input_hamiltonian
 !
 subroutine input_hamiltonian_crs()
   !$ use omp_lib
-  use shiftk_vals,only : ndim,inham,solver,almost0,stdout
+  use shiftk_vals,only : ndim,inham,solver,almost0,stdout,solver
   use ham_vals,only : row_ptr,col_ind,ham_crs_val,ham_crs_val_r,row_se
   implicit none
   integer :: fi=10
   integer :: i,j,n,idim,jdim,nham,ie,ns,ne,numd,num,numham,numlim,nthreads
   integer,allocatable :: irow(:),jcol(:)
   complex(kind(0.0D0)),allocatable :: vval(:)
+  double precision,allocatable :: vval_r(:)
   double precision :: rval,cval,t01,t02
   logical :: lbal
   !
@@ -536,22 +537,39 @@ subroutine input_hamiltonian_crs()
      stop
   end if
   !
-  allocate(irow(nham*2),jcol(nham*2),vval(nham*2))
+  allocate(irow(nham*2),jcol(nham*2))
+  if(trim(solver) == "bicg") then
+     allocate(vval(nham*2))
+  else
+     allocate(vval_r(nham*2))
+  endif
   numd=0
   do n=1,nham
      numd=numd+1
      read(fi,*) irow(numd),jcol(numd),rval,cval
-     vval(numd)=cmplx(rval,cval,kind(0.0D0))
+     if(trim(solver) == "bicg") then
+        vval(numd)=cmplx(rval,cval,kind(0.0D0))
+     else
+        vval_r(numd)=rval
+     endif
      if(irow(numd).eq.jcol(numd))then
      else
         numd=numd+1
         irow(numd)=jcol(numd-1)
         jcol(numd)=irow(numd-1)
-        vval(numd)=conjg(vval(numd-1))
+        if(trim(solver) == "bicg") then
+           vval(numd)=conjg(vval(numd-1))
+        else
+           vval_r(numd)=vval_r(numd-1)
+        endif
      end if
   end do
   close(fi)
-  call quicksort3(irow,jcol,vval,1,numd)
+  if(trim(solver) == "bicg") then
+     call quicksort3(irow,jcol,vval,1,numd)
+  else
+     call quicksort3_r(irow,jcol,vval_r,1,numd)
+  endif
   !
   i=irow(1)
   ns=1
@@ -561,7 +579,11 @@ subroutine input_hamiltonian_crs()
         ne=ne+1
      else
         if(n.eq.numd) ne=ne+1
-        call quicksort2(jcol,vval,ns,ne)
+        if(trim(solver) == "bicg") then
+           call quicksort2(jcol,vval,ns,ne)
+        else
+           call quicksort2_r(jcol,vval_r,ns,ne)
+        endif
         do j=ns+1,ne
            if(jcol(j).eq.jcol(j-1)) then
               write(stdout,*) "ERROR! A duplicate matrix element."
@@ -574,18 +596,31 @@ subroutine input_hamiltonian_crs()
      end if
   end do
   !
-  allocate(row_ptr(idim+1),col_ind(numd),ham_crs_val(numd),ham_crs_val_r(numd))
+  allocate(row_ptr(idim+1),col_ind(numd))
+  if(trim(solver) == "bicg") then
+     allocate(ham_crs_val(numd))
+  else
+     allocate(ham_crs_val_r(numd))
+  endif
   row_ptr(:)=-1
   do n=1,numd
      col_ind(n)=jcol(n)
      if(row_ptr(irow(n)).lt.0) then
         row_ptr(irow(n))=n
      end if
-     ham_crs_val(n)=vval(n)
-     ham_crs_val_r(n)=REAL(vval(n))
+     if(trim(solver) == "bicg") then
+        ham_crs_val(n)=vval(n)
+     else
+        ham_crs_val_r(n)=vval_r(n)
+     endif
   end do
   row_ptr(idim+1)=n
-  deallocate(irow,jcol,vval)
+  deallocate(irow,jcol)
+  if(trim(solver) == "bicg") then
+     deallocate(vval)
+  else
+     deallocate(vval_r)
+  endif
   !
   nthreads = 1
   !$OMP PARALLEL default(shared)
@@ -848,7 +883,7 @@ SUBROUTINE input_restart_vector()
   !
   ! Last two Shadow residual vectors (Only for BiCG)
   !
-  IF(solver == "bicg") THEN
+  IF(TRIM(solver) == "bicg") THEN
      DO idim = 1, ndim
         READ(fi,*) v2_r, v2_i, v12_r, v12_i
         v4(idim) = CMPLX(v2_r, v2_i, KIND(0d0))
@@ -930,7 +965,7 @@ SUBROUTINE output_restart_vector()
      WRITE(fo,'(4e25.16)') v2(idim), v12(idim)
   END DO
   !
-  IF(solver == "bicg") THEN
+  IF(TRIM(solver) == "bicg") THEN
      DO idim = 1, ndim
         WRITE(fo,'(4e25.16)') v4(idim), v14(idim)
      END DO
@@ -1055,6 +1090,44 @@ recursive subroutine quicksort3(ii,jj,cc,is,ie)
   !
 end subroutine quicksort3
 !
+recursive subroutine quicksort3_r(ii,jj,rr,is,ie)
+  implicit none
+  integer,intent(IN) :: is,ie
+  integer,intent(INOUT) :: ii(:),jj(:)
+  double precision,intent(INOUT) :: rr(:)
+  !
+  integer :: i,j,h,ti
+  double precision :: tr
+  !
+  h=ii((is+ie)/2)
+  i=is
+  j=ie
+  do
+     do while (ii(i).lt.h)
+        i=i+1
+     end do
+     do while (h.lt.ii(j))
+        j=j-1
+     end do
+     if(i.ge.j) exit
+     ti=ii(i)
+     ii(i)=ii(j)
+     ii(j)=ti
+     ti=jj(i)
+     jj(i)=jj(j)
+     jj(j)=ti
+     tr=rr(i)
+     rr(i)=rr(j)
+     rr(j)=tr
+     i=i+1
+     j=j-1
+  end do
+  !
+  if(is.lt.i-1) call quicksort3_r(ii,jj,rr,is,i-1)
+  if(j+1.lt.ie) call quicksort3_r(ii,jj,rr,j+1,ie)
+  !
+end subroutine quicksort3_r
+!
 recursive subroutine quicksort2(ii,cc,is,ie)
   implicit none
   integer,intent(IN) :: is,ie
@@ -1089,5 +1162,40 @@ recursive subroutine quicksort2(ii,cc,is,ie)
   if(j+1.lt.ie) call quicksort2(ii,cc,j+1,ie)
   !
 end subroutine quicksort2
+!
+recursive subroutine quicksort2_r(ii,rr,is,ie)
+  implicit none
+  integer,intent(IN) :: is,ie
+  integer,intent(INOUT) :: ii(:)
+  double precision,intent(INOUT) :: rr(:)
+  !
+  integer :: i,j,h,ti
+  double precision :: tr
+  !
+  h=ii((is+ie)/2)
+  i=is
+  j=ie
+  do
+     do while (ii(i).lt.h)
+        i=i+1
+     end do
+     do while (h.lt.ii(j))
+        j=j-1
+     end do
+     if(i.ge.j) exit
+     ti=ii(i)
+     ii(i)=ii(j)
+     ii(j)=ti
+     tr=rr(i)
+     rr(i)=rr(j)
+     rr(j)=tr
+     i=i+1
+     j=j-1
+  end do
+  !
+  if(is.lt.i-1) call quicksort2_r(ii,rr,is,i-1)
+  if(j+1.lt.ie) call quicksort2_r(ii,rr,j+1,ie)
+  !
+end subroutine quicksort2_r
 !
 END MODULE shiftk_io
