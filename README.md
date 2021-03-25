@@ -1,5 +1,5 @@
 <a name= "english">
-[日本語]( README_ja.md#japanese ) / English 
+[日本語](README_ja.md) / English 
 
 <img src="doc/figs/komega.png" width="300">
 
