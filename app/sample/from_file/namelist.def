@@ -1,6 +1,7 @@
 &filename
   inham = "zvo_Ham.dat"
   invec = "zvo_Excited.dat"
+  hamtype = "complex"
 /
 &ham
 /

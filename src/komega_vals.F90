@@ -140,3 +140,35 @@ MODULE komega_vecs_c
 #endif
   !
 END MODULE komega_vecs_c
+
+
+MODULE komega_vals_shifted_qmr_sym
+  IMPLICIT NONE
+
+  COMPLEX(8), SAVE :: &
+          & alpha_n, beta_n, beta_nmin1
+
+  COMPLEX(8), ALLOCATABLE, SAVE :: &
+          & c_n(:), c_nmin1(:), c_nmin2(:), g_n(:), g_npls1(:), p_n(:,:), p_nmin1(:,:), p_nmin2(:,:), &
+          & s_n(:), s_nmin1(:), s_nmin2(:), t_n_n(:), t_nmin2_nmin2(:), t_nmin1_nmin1(:), t_nmin1_n(:), &
+          & t_nmin2_n(:), t_npls1_n(:), v_nmin1(:), w_n(:,:), w_nmin1(:,:), x_nmin1(:,:), &
+          & b(:), v_npls1(:), z(:)
+
+  REAL(8),ALLOCATABLE,SAVE :: res_fast(:, :), r_nmin1(:)
+END MODULE komega_vals_shifted_qmr_sym
+
+
+MODULE komega_vals_shifted_qmr_sym_b
+  IMPLICIT NONE
+
+  COMPLEX(8), SAVE :: &
+          & alpha_n, beta_n, beta_nmin1
+
+  COMPLEX(8), ALLOCATABLE, SAVE :: &
+          & g_n(:), g_npls1(:), f_n(:), f_nmin1(:), p_n(:,:), p_nmin1(:,:), &
+          & t_n_n(:),t_nmin1_nmin1(:), t_nmin1_n(:), &
+          & t_npls1_n(:), v_nmin1(:), x_nmin1(:,:), &
+          & b(:), v_npls1(:), z(:)
+
+  REAL(8),ALLOCATABLE,SAVE :: r_n(:)
+END MODULE komega_vals_shifted_qmr_sym_b

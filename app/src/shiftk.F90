@@ -34,8 +34,8 @@
 PROGRAM shiftk
   !
   USE shiftk_io, ONLY : shiftk_init, input_filename, input_hamiltonian, input_rhs_vector, &
-  &                     input_parameter_cg, input_parameter_dyn, input_parameter_ham
-  USE shiftk_vals, ONLY : invec, inham,stdout
+  &                     input_parameter_cg, input_parameter_dyn, input_parameter_ham, input_hamiltonian_crs
+  USE shiftk_vals, ONLY : invec, inham, stdout, myrank, solver
   USE lobpcg_mod, ONLY : lobpcg_driver
   USE ham_prod_mod, ONLY : print_ham, onthefly_init, finalize_ham
   USE dyn_mod, ONLY : dyn
@@ -50,6 +50,8 @@ PROGRAM shiftk
   !
   CALL input_filename()
   !
+  CALL input_parameter_cg()
+  !
   ! Initialize hamiltonian
   !
   IF(inham == "") THEN
@@ -59,10 +61,11 @@ PROGRAM shiftk
      CALL print_ham()
 #endif
   ELSE
-     CALL input_hamiltonian()
+     !CALL input_hamiltonian()
+     call input_hamiltonian_crs()
   END IF
   !
-  CALL input_parameter_cg()
+  !CALL input_parameter_cg()
   !
   ! Initialize Right Hand Side Vector
   !

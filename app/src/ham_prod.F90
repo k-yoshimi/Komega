@@ -41,10 +41,18 @@ MODULE ham_vals
   !
   INTEGER,ALLOCATABLE,SAVE :: &
   & ham_indx(:,:), & ! row & column index of Hamiltonian
-  & pair(:)          ! pair connected by S+S- or S+S+
+  & pair(:), &       ! pair connected by S+S- or S+S+
+  & colind(:), &     ! index for column
+  & rowptr(:)        ! row pointer
   !
   COMPLEX(8),ALLOCATABLE,SAVE :: &
-  & ham(:) ! Compressed Hamiltonian
+  & ham(:), &     ! Compressed Hamiltonian
+  & dvalues(:), & ! Diagonal element of Hamiltonian
+  & values(:)     ! Off-diagonal element of Hamiltonian
+  !
+  integer,allocatable,save :: row_ptr(:),col_ind(:),row_se(:,:)
+  complex(kind(0.0D0)),allocatable,save :: ham_crs_val(:)
+  real(8),allocatable,save :: ham_crs_val_r(:)
   !
 #if defined(__MPI)
   COMPLEX(8),ALLOCATABLE,SAVE :: &
@@ -67,21 +75,32 @@ CONTAINS
 !
 ! Driver routine for the Hamiltonian-Vector Product
 !
-SUBROUTINE ham_prod(veci,veco)
+SUBROUTINE ham_prod(veci,veco,t11,t12,lcollect)
   !
-  USE shiftk_vals, ONLY : ndim, inham
+  USE shiftk_vals, ONLY : ndim, inham, solver
   !
   IMPLICIT NONE
   !
   COMPLEX(8),INTENT(IN) :: veci(ndim)
   COMPLEX(8),INTENT(OUT) :: veco(ndim)
+  double precision,intent(OUT) :: t11,t12
+  logical,intent(IN) :: lcollect
   !
   veco(1:ndim) = CMPLX(0d0, 0d0, KIND(0d0))
   !
+  !WRITE(*,*) veci(1:10)
+  !
   IF(inham == "") THEN
      CALL ham_prod_onthefly(veci,veco)
+     t11 = 0.0D0
+     t12 = 0.0D0
   ELSE
-     CALL ham_prod_compress(veci,veco)
+     IF (TRIM(solver) == 'bicg') THEN
+     !CALL ham_prod_compress_csr(veci,veco,t11,t12,lcollect)
+        call ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
+     ELSE
+        call ham_prod_compress_crs_r(veci,veco,t11,t12,lcollect)
+     ENDIF
   END IF
   !
 END SUBROUTINE ham_prod
@@ -113,6 +132,191 @@ SUBROUTINE ham_prod_compress(veci,veco)
   END DO
   !
 END SUBROUTINE ham_prod_compress
+!
+! Hamiltonian-vector product with CSR format (Gkountouvas et al. (2013))
+!
+SUBROUTINE ham_prod_compress_csr(veci,veco,t11,t12,lcollect)
+  !$ USE omp_lib, only : OMP_GET_NUM_THREADS, omp_get_wtime
+  USE shiftk_vals, ONLY : ndim, myrank, nproc
+  USE ham_vals, ONLY : nham, ndiag, ham, ham_indx, colind, rowptr, dvalues, values
+#if defined(__MPI)
+  USE mpi, only : MPI_COMM_WORLD, MPI_DOUBLE_COMPLEX, MPI_SUM
+#endif
+  !
+  IMPLICIT NONE
+  !
+#if defined(__MPI)
+  INTEGER :: ierr, iend
+#endif
+  !
+  COMPLEX(8),INTENT(IN) :: veci(ndim)
+  COMPLEX(8),INTENT(OUT) :: veco(ndim)
+  double precision,intent(OUT) :: t11,t12
+  logical,intent(IN) :: lcollect
+  !
+#if defined(__MPI)
+  COMPLEX(8) :: vecbuf(ndim)
+#else
+  COMPLEX(8),ALLOCATABLE :: vecbuf(:,:)
+#endif
+  INTEGER, ALLOCATABLE :: is(:), ie(:)
+  COMPLEX(8) :: zero, vtmp
+  !DOUBLE PRECISION :: DOT_PRODUCT
+  INTEGER :: i, ib, iham, jham, col, ham_indx0(2), nthreads
+  !
+#if defined(__MPI)
+  vecbuf = CMPLX(0d0, 0d0, KIND(0d0))
+  ib = ndim/nproc
+  IF(myrank == nproc-1) THEN
+     iend = ndim
+  ELSE
+     iend = (myrank+1)*ib
+  ENDIF
+  DO iham = myrank*ib+1, iend
+     vecbuf(iham) = vecbuf(iham) + dvalues(iham) * veci(iham)
+     DO jham = rowptr(iham), rowptr(iham+1)-1
+        col = colind(jham)
+        vecbuf(iham) = vecbuf(iham) + values(jham) * veci(col)
+        vecbuf(col) = vecbuf(col) + CONJG(values(jham)) * veci(iham)
+     END DO
+  END DO
+  CALL MPI_ALLREDUCE(vecbuf, veco, ndim, MPI_DOUBLE_COMPLEX, MPI_SUM, MPI_COMM_WORLD, ierr)
+#else
+  nthreads = 1
+  !$OMP PARALLEL
+  !$OMP MASTER
+  !$ nthreads = OMP_GET_NUM_THREADS()
+  !$OMP END MASTER
+  !$OMP END PARALLEL
+  ALLOCATE(vecbuf(nthreads,ndim),is(nthreads),ie(nthreads))
+  zero = CMPLX(0d0, 0d0, KIND(0d0))
+  vecbuf = zero
+  veco = zero
+  !
+  ib = ndim/nthreads
+  DO i = 1, nthreads
+    is(i) = (i-1)*ib+1
+    ie(i) = i*ib
+  END DO
+  ie(nthreads) = ndim
+  !WRITE(*,*) nthreads
+  !WRITE(*,*) ndim
+  !STOP
+  !$ t11 = omp_get_wtime()
+  !if(lcollect) call start_collection("region11")
+  !$OMP PARALLEL default(shared), private(i, iham, jham, col, vtmp), firstprivate(ndim, nthreads, veci)
+  !$OMP DO
+  DO i = 1, nthreads
+     DO iham = is(i), ie(i)
+        vtmp = dvalues(iham) * veci(iham)
+        DO jham = rowptr(iham), rowptr(iham+1)-1
+           col = colind(jham)
+           vtmp = vtmp + values(jham) * veci(col)
+           vecbuf(i,col) = vecbuf(i,col) + CONJG(values(jham)) * veci(iham)
+        END DO
+        vecbuf(i,iham) = vtmp
+     END DO
+  END DO
+  !$OMP END DO
+  !$OMP DO
+  DO iham = 1, ndim
+     vtmp = zero
+     DO i = 1, nthreads
+        vtmp = vtmp + vecbuf(i,iham)
+     END DO
+     veco(iham) = vtmp
+  END DO
+  !$OMP END DO
+  !$OMP END PARALLEL
+  !if(lcollect) call stop_collection("region11")
+  !$ t12 = omp_get_wtime()
+  DEALLOCATE(vecbuf,is,ie)
+#endif
+  !
+END SUBROUTINE ham_prod_compress_csr
+  !
+subroutine ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
+  !$ use omp_lib
+  use shiftk_vals,only : ndim
+  use ham_vals,only : row_ptr,col_ind,ham_crs_val,row_se
+  implicit none
+  complex(kind(0.0D0)),intent(IN ) :: veci(ndim)
+  complex(kind(0.0D0)),intent(OUT) :: veco(ndim)
+  double precision,intent(OUT) :: t11,t12
+  logical,intent(IN) :: lcollect
+  !
+  integer :: i,j,ithread,is,ie
+  complex(kind(0.0D0)) :: czero
+  !
+#if defined(__MPI)
+  write(*,*) "MPI version of subroutine ham_prod_compress_crs has not been made."
+  stop
+#else
+  !
+  !$ t11 = omp_get_wtime()
+  !if(lcollect) call start_collection("region11")
+  ithread = 0
+  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie,czero)
+  !$ ithread = omp_get_thread_num()
+  is = row_se(1,ithread)
+  ie = row_se(2,ithread)
+  czero = cmplx(0.0D0,0.0D0,kind(0.0D0))
+  !write(6,*) "is ie = ", is, ie
+  do i = is, ie
+     !write(6,*) "i", i
+     veco(i) = czero
+     !write(6,*) "start loop row_ptr"
+     do j = row_ptr(i), row_ptr(i+1) - 1
+        !write(6,*) "j", j
+        !write(6,*) "col_ind(j)", col_ind(j)
+        veco(i) = veco(i) + ham_crs_val(j) * veci(col_ind(j))
+     end do
+  end do
+  !$OMP END PARALLEL
+  !if(lcollect) call stop_collection("region11")
+  !$ t12 = omp_get_wtime()
+  !
+#endif
+end subroutine ham_prod_compress_crs
+!
+subroutine ham_prod_compress_crs_r(veci,veco,t11,t12,lcollect)
+  !$ use omp_lib
+  use shiftk_vals,only : ndim
+  use ham_vals,only : row_ptr,col_ind,ham_crs_val_r,row_se
+  implicit none
+  complex(kind(0.0D0)),intent(IN ) :: veci(ndim)
+  complex(kind(0.0D0)),intent(OUT) :: veco(ndim)
+  double precision,intent(OUT) :: t11,t12
+  logical,intent(IN) :: lcollect
+  !
+  integer :: i,j,ithread,is,ie
+  complex(kind(0.0D0)) :: czero
+  !
+#if defined(__MPI)
+  write(*,*) "MPI version of subroutine ham_prod_compress_crs_r has not been made."
+  stop
+#else
+  !
+  !$ t11 = omp_get_wtime()
+  !if(lcollect) call start_collection("region11")
+  ithread = 0
+  !$OMP PARALLEL default(shared), private(i,j,ithread,is,ie,czero)
+  !$ ithread = omp_get_thread_num()
+  is = row_se(1,ithread)
+  ie = row_se(2,ithread)
+  czero = cmplx(0.0D0,0.0D0,kind(0.0D0))
+  do i = is, ie
+     veco(i) = czero
+     do j = row_ptr(i), row_ptr(i+1) - 1
+        veco(i) = veco(i) + ham_crs_val_r(j) * veci(col_ind(j))
+     end do
+  end do
+  !$OMP END PARALLEL
+  !if(lcollect) call stop_collection("region11")
+  !$ t12 = omp_get_wtime()
+  !
+#endif
+end subroutine ham_prod_compress_crs_r
 !
 ! Hamiltonian-vector product with On-The-Fly Hamiltonian generation
 !
@@ -477,7 +681,7 @@ SUBROUTINE finalize_ham()
      DEALLOCATE(veci_buf)
 #endif
   ELSE
-     DEALLOCATE(ham, ham_indx)
+     !DEALLOCATE(ham, ham_indx)
   END IF
   !
 END SUBROUTINE finalize_ham
@@ -499,6 +703,8 @@ SUBROUTINE print_ham()
   INTEGER :: ierr
 #endif
   COMPLEX(8),ALLOCATABLE :: veci(:), veco(:)
+  double precision :: t11,t12
+  logical :: lcollect=.FALSE.
   !
   IF(nproc /= 1) RETURN
   !
@@ -518,7 +724,7 @@ SUBROUTINE print_ham()
            veci(1:ndim) = CMPLX(0d0, 0d0, KIND(0d0))
         END IF
         !
-        CALL ham_prod(veci, veco)
+        CALL ham_prod(veci, veco, t11, t12, lcollect)
         !
         IF(myrank >= iproc) nham = nham + COUNT(ABS(veco(idim:ndim)) > almost0)
         !
@@ -541,7 +747,7 @@ SUBROUTINE print_ham()
            veci(1:ndim) = CMPLX(0d0, 0d0, KIND(0d0))
         END IF
         !
-        CALL ham_prod(veci, veco)
+        CALL ham_prod(veci, veco, t11, t12, lcollect)
         !
         DO jproc = iproc, nproc - 1
            DO jdim = idim, ndim

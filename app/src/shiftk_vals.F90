@@ -51,6 +51,7 @@ MODULE shiftk_vals
   & rhs(:),        &
   & v12(:), v2(:), & ! (ndim): Working vector
   & v14(:), v4(:), & ! (ndim): Working vector
+  & v_n(:), Av_n(:), & ! (ndim): Working vector for QMR algorithms
   & r_l(:),        & ! (nl) : Projeccted residual vector 
   & x_l(:,:)         ! (nl,nomega) : Projected result 
   !
@@ -60,8 +61,9 @@ MODULE shiftk_vals
   & calctype ! Restart type
   !
   LOGICAL,SAVE :: &
-  lBiCG, &   ! BiCG is used for Complex-Hermitian case
   outrestart ! Flag for output restart parameters
+
+  CHARACTER(20),SAVE :: solver ! BiCG / COCG / shifted_qmr_sym / shifted_qmr_sym_b
   !
   ! Variables for Restart
   !

@@ -139,6 +139,13 @@ Hamiltonian and the RHS vector.
 for specifying the numerical condition for the
 (Bi)Conjugate-gradient method.
 
+-  ``method``
+
+   **形式 :** string (default: ``""``)
+
+   **説明 :** Gradient method. Choose from "bicg", "cocg", "shifted_qmr_sym", "shifted_qmr_sym_b".
+   If the method is not chosen, "cocg" is used for real Hamiltonian, "bicg" is used otherwise.
+
 -  ``MaxLoops``
 
    **Type :** int (default: the dimension of the Hamiltonian)
