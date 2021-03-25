@@ -1,5 +1,6 @@
 <a name= "japanese">
-日本語 / [English](README.md#english)
+
+日本語 / [English](README.md)
 
 <img src="doc/figs/komega.png" width="300">
 
