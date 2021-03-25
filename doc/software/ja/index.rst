@@ -13,6 +13,7 @@ Welcome to :math:`K\omega`\ -sample program's documentation!
    shiftk_copy_ja.rst
    shiftk_env_ja.rst
    shiftk_flow_ja.rst
+   shiftk_tutorial_ja.rst
    shiftk_format_ja.rst
    shiftk_contact_ja.rst
 
