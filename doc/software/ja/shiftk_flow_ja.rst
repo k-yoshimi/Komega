@@ -16,8 +16,9 @@
 
 .. _calcflow:
      
-.. figure:: ../figs/flow.png
-
+.. figure:: ../figs/flow_ja.png
+	    :width: 8cm
+            
             計算の流れ.
 
 .. _usage:

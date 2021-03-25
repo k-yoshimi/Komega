@@ -11,7 +11,8 @@ This program performs simulation as follows (See Fig. :num:`calcflow` ):
 
 .. _calcflow:
      
-.. figure:: ../figs/flow.png
+.. figure:: ../figs/flow_en.png
+	    :width: 8cm
 
             Schematic flow of the calculation of this program.
 
