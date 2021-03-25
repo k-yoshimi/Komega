@@ -42,9 +42,9 @@ SUBROUTINE shiftk_init()
   CHARACTER(256) :: fname
   INTEGER ierr, iargc
   !
-  if(iargc() /= 2) then
+  if(iargc() /= 1) then
      write(*,*) "Argument error. Usage: "
-     write(*,*) "ShiftK.out namelist.def [bicg | cocg | shifted_qmr_sym | shifted_qmr_sym_b]"
+     write(*,*) "ShiftK.out namelist.def"
      stop
   end if
   !
@@ -64,9 +64,7 @@ SUBROUTINE shiftk_init()
      stdout = 6
      !
      call getarg(1, fname)
-     CALL getarg(2, solver)
      WRITE(*,*) "fname ", TRIM(fname)
-     WRITE(*,*) "solver ", TRIM(solver)
      OPEN(inpunit, file = TRIM(fname), status = "OLD", iostat = ierr)
      !
      IF(ierr /= 0) THEN
@@ -77,12 +75,6 @@ SUBROUTINE shiftk_init()
         STOP
      ELSE
         WRITE(*,*) "  Open input file ", TRIM(fname)
-     END IF
-
-     IF (TRIM(solver) /= "bicg" .AND. TRIM(solver) /= "cocg" .AND. &
-             & TRIM(solver) /= "shifted_qmr_sym" .AND. TRIM(solver) /= "shifted_qmr_sym_b") THEN
-        WRITE(*, *) "The algorithm is not implemented."
-        STOP
      END IF
      !
   ELSE
@@ -228,26 +220,31 @@ SUBROUTINE input_parameter_cg()
 #if defined(__MPI)
   USE mpi, only : MPI_COMM_WORLD, MPI_INTEGER
 #endif
-  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit
+  USE shiftk_vals, ONLY : maxloops, threshold, ndim, stdout, myrank, inpunit, solver
   !
   IMPLICIT NONE
   !
   INTEGER :: convfactor
+  CHARACTER(20) :: method
 #if defined(__MPI)
   INTEGER ierr
 #endif
-  NAMELIST /cg/ maxloops, convfactor
+  NAMELIST /cg/ method, maxloops, convfactor
+  !WRITE(*,*) "method", method
   !WRITE(*,*) "maxloops", maxloops
   !WRITE(*,*) "convfactor", convfactor
   !
   maxloops = ndim
   convfactor = 8
+  method = ""
   !
   IF(myrank == 0) READ(inpunit,cg,err=100)
   !
+  solver = method
 #if defined(__MPI)
   call MPI_BCAST(maxloops,   1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
   call MPI_BCAST(convfactor, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+  call MPI_BCAST(solver, 20, MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
 #endif
   !
   threshold = 10d0**(-convfactor)
@@ -255,6 +252,7 @@ SUBROUTINE input_parameter_cg()
   WRITE(stdout,*)
   WRITE(stdout,*) "##########  Input Parameter for CG Iteration ##########"
   WRITE(stdout,*)
+  WRITE(stdout,*) "                  Method : ", TRIM(solver)
   WRITE(stdout,*) "  Maximum number of loop : ", maxloops
   WRITE(stdout,*) "   Convergence Threshold : ", threshold
   !
