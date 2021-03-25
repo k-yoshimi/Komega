@@ -103,19 +103,27 @@ SUBROUTINE input_filename()
 #if defined(__MPI)
   USE mpi, only : MPI_COMM_WORLD, MPI_CHARACTER
 #endif
-  USE shiftk_vals, ONLY : inham, invec, stdout, myrank, inpunit
+  USE shiftk_vals, ONLY : inham, invec, stdout, myrank, inpunit, solver
   !
   IMPLICIT NONE
+  CHARACTER(20) hamtype
   !
 #if defined(__MPI)
   INTEGER ierr
 #endif
-  NAMELIST /filename/ inham, invec
+  NAMELIST /filename/ inham, invec, hamtype
   !
   inham = ""
   invec = ""
+  hamtype = ""
   !
   IF(myrank == 0) READ(inpunit,filename,err=100)
+  !
+  IF(TRIM(hamtype) == "real") THEN
+      solver = "cocg"
+  ELSE
+      solver = "bicg"
+  ENDIF
   !
 #if defined(__MPI)
   call MPI_BCAST(inham, 256, MPI_CHARACTER, 0, MPI_COMM_WORLD, ierr)
@@ -238,10 +246,10 @@ SUBROUTINE input_parameter_cg()
   !
   maxloops = ndim
   convfactor = 8
-  method = "bicg"
+  method = ""
   !
   IF(myrank == 0) READ(inpunit,cg,err=100)
-  solver = method
+  IF(TRIM(method) /= "") solver = method
   !
 #if defined(__MPI)
   call MPI_BCAST(maxloops,   1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
@@ -516,13 +524,6 @@ subroutine input_hamiltonian_crs()
   double precision,allocatable :: vval_r(:)
   double precision :: rval,cval,t01,t02
   logical :: lbal
-  !character(20) :: method
-  !NAMELIST /cg/ method
-  !
-  !method = "bicg"
-  !
-  !IF(myrank == 0) READ(inpunit,cg,err=100)
-  !solver = method
   !
   write(stdout,*)
   write(stdout,*) "##########  Input Hamiltonian  ##########"
