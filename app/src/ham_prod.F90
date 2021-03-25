@@ -261,9 +261,14 @@ subroutine ham_prod_compress_crs(veci,veco,t11,t12,lcollect)
   is = row_se(1,ithread)
   ie = row_se(2,ithread)
   czero = cmplx(0.0D0,0.0D0,kind(0.0D0))
+  !write(6,*) "is ie = ", is, ie
   do i = is, ie
+     !write(6,*) "i", i
      veco(i) = czero
+     !write(6,*) "start loop row_ptr"
      do j = row_ptr(i), row_ptr(i+1) - 1
+        !write(6,*) "j", j
+        !write(6,*) "col_ind(j)", col_ind(j)
         veco(i) = veco(i) + ham_crs_val(j) * veci(col_ind(j))
      end do
   end do

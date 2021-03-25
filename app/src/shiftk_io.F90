@@ -35,12 +35,13 @@ SUBROUTINE shiftk_init()
   USE mpi, only : MPI_COMM_WORLD
 #endif
   !$ USE omp_lib, only : OMP_GET_NUM_THREADS
-  USE shiftk_vals, ONLY : myrank, nproc, stdout, inpunit, solver
+  USE shiftk_vals, ONLY : myrank, nproc, stdout, inpunit
   !
   IMPLICIT NONE
   !
   CHARACTER(256) :: fname
   INTEGER ierr, iargc
+  !
   !
   if(iargc() /= 1) then
      write(*,*) "Argument error. Usage: "
@@ -82,6 +83,7 @@ SUBROUTINE shiftk_init()
      OPEN(stdout, file='/dev/null', status='unknown')
   END IF
   !
+  !
   WRITE(stdout,*)
   WRITE(stdout,*) "  Number of processes : ", nproc
   !$OMP PARALLEL
@@ -90,6 +92,7 @@ SUBROUTINE shiftk_init()
   !$OMP END MASTER
   !$OMP END PARALLEL
   WRITE(stdout,*)
+  !
   !
 END SUBROUTINE shiftk_init
 !
@@ -230,17 +233,16 @@ SUBROUTINE input_parameter_cg()
   INTEGER ierr
 #endif
   NAMELIST /cg/ method, maxloops, convfactor
-  !WRITE(*,*) "method", method
   !WRITE(*,*) "maxloops", maxloops
   !WRITE(*,*) "convfactor", convfactor
   !
   maxloops = ndim
   convfactor = 8
-  method = ""
+  method = "bicg"
   !
   IF(myrank == 0) READ(inpunit,cg,err=100)
-  !
   solver = method
+  !
 #if defined(__MPI)
   call MPI_BCAST(maxloops,   1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
   call MPI_BCAST(convfactor, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
@@ -504,7 +506,7 @@ END SUBROUTINE input_hamiltonian
 !
 subroutine input_hamiltonian_crs()
   !$ use omp_lib
-  use shiftk_vals,only : ndim,inham,solver,almost0,stdout,solver
+  use shiftk_vals,only : ndim,inham,solver,almost0,stdout,solver,inpunit,myrank
   use ham_vals,only : row_ptr,col_ind,ham_crs_val,ham_crs_val_r,row_se
   implicit none
   integer :: fi=10
@@ -514,6 +516,13 @@ subroutine input_hamiltonian_crs()
   double precision,allocatable :: vval_r(:)
   double precision :: rval,cval,t01,t02
   logical :: lbal
+  !character(20) :: method
+  !NAMELIST /cg/ method
+  !
+  !method = "bicg"
+  !
+  !IF(myrank == 0) READ(inpunit,cg,err=100)
+  !solver = method
   !
   write(stdout,*)
   write(stdout,*) "##########  Input Hamiltonian  ##########"
@@ -669,6 +678,8 @@ subroutine input_hamiltonian_crs()
   !$ write(fi,*) "timer:",t02-t01
   close(fi)
   !
+  return
+  !
   ! Hermitian(BiCG) or Real-Symmetric(COCG)
   !
 !  IF(MAXVAL(ABS(AIMAG(ham_crs_val(1:numd)))) > almost0) THEN
@@ -678,6 +689,12 @@ subroutine input_hamiltonian_crs()
 !     WRITE(stdout,*) "  COCG mathod is used."
 !     solver = "COCG"
 !  END IF
+100 write(*,*) "Stop in INPUT_PARAMETER for CG. reading namelist CG method"
+  !
+#if defined(__MPI)
+  CALL MPI_ABORT(MPI_COMM_WORLD, 1, ierr)
+#endif
+  STOP
   !
 end subroutine input_hamiltonian_crs
 !!

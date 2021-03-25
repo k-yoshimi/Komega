@@ -50,6 +50,8 @@ PROGRAM shiftk
   !
   CALL input_filename()
   !
+  CALL input_parameter_cg()
+  !
   ! Initialize hamiltonian
   !
   IF(inham == "") THEN
@@ -63,7 +65,7 @@ PROGRAM shiftk
      call input_hamiltonian_crs()
   END IF
   !
-  CALL input_parameter_cg()
+  !CALL input_parameter_cg()
   !
   ! Initialize Right Hand Side Vector
   !
