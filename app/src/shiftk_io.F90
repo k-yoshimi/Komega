@@ -115,14 +115,16 @@ SUBROUTINE input_filename()
   !
   inham = ""
   invec = ""
-  hamtype = ""
+  hamtype = "complex"
   !
   IF(myrank == 0) READ(inpunit,filename,err=100)
   !
   IF(TRIM(hamtype) == "real") THEN
       solver = "cocg"
-  ELSE
+  ELSE IF(TRIM(hamtype) == "complex") THEN
       solver = "bicg"
+  ELSE
+      goto 100
   ENDIF
   !
 #if defined(__MPI)
