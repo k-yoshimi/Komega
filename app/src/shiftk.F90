@@ -50,8 +50,6 @@ PROGRAM shiftk
   !
   CALL input_filename()
   !
-  CALL input_parameter_cg()
-  !
   ! Initialize hamiltonian
   !
   IF(inham == "") THEN
@@ -60,8 +58,10 @@ PROGRAM shiftk
 #if defined(DEBUG)
      CALL print_ham()
 #endif
+     CALL input_parameter_cg()
   ELSE
      !CALL input_hamiltonian()
+      CALL input_parameter_cg()
      call input_hamiltonian_crs()
   END IF
   !
