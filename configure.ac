@@ -67,8 +67,12 @@ LT_INIT
 echo ""
 echo "  Check BLAS and LAPACK"
 echo ""
-AX_BLAS
-AX_LAPACK
+# Check for BLAS
+AC_CHECK_LIB([blas], [dgemm_], [BLAS_LIBS="-lblas"], [BLAS_LIBS=""])
+# Check for LAPACK
+AC_CHECK_LIB([lapack], [dgesv_], [LAPACK_LIBS="-llapack"], [LAPACK_LIBS=""])
+AC_SUBST([BLAS_LIBS])
+AC_SUBST([LAPACK_LIBS])
 #
 # Shread-safe
 #

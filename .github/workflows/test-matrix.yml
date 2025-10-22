@@ -86,9 +86,15 @@ jobs:
     - name: Build
       run: |
         # Build with verbose output to see detailed errors
+        echo "=== Building with parallel jobs ==="
         make -j$(nproc) V=1 || {
           echo "Parallel build failed, trying single-threaded build..."
-          make -j1 V=1
+          echo "=== Building with single thread ==="
+          make -j1 V=1 || {
+            echo "Single-threaded build also failed, trying clean build..."
+            make clean
+            make -j1 V=1
+          }
         }
 
     - name: Install
