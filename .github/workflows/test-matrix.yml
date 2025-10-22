@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest, macos-latest]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
         fortran-compiler: [gfortran]
         blas-variant: [reference, openblas]
         include:
@@ -28,9 +28,6 @@ jobs:
           - os: ubuntu-latest
             fortran-compiler: gfortran
             blas-variant: openblas
-          - os: macos-latest
-            fortran-compiler: gfortran
-            blas-variant: openblas
 
     steps:
     - uses: actions/checkout@v4
@@ -39,160 +36,17 @@ jobs:
       if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran
+        sudo apt-get install -y gfortran autotools-dev automake autoconf libtool pkg-config
         if [ "${{ matrix.blas-variant }}" = "reference" ]; then
           sudo apt-get install -y libblas-dev liblapack-dev
         else
           sudo apt-get install -y libopenblas-dev liblapack-dev
         fi
 
-    - name: Set up Fortran environment (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        # Install Homebrew if not present
-        if ! command -v brew &> /dev/null; then
-          echo "Installing Homebrew..."
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || echo "Homebrew installation completed with warnings"
-          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
-          eval "$(/opt/homebrew/bin/brew shellenv)"
-        fi
-        
-        # Ensure Homebrew environment is properly set up
-        echo "Setting up Homebrew environment..."
-        eval "$(/opt/homebrew/bin/brew shellenv)" || echo "Homebrew shellenv failed"
-        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-        echo "Current PATH: $PATH"
-        echo "Homebrew location: $(which brew)"
-        
-        # Set up PATH for Homebrew
-        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-        echo "/opt/homebrew/bin" >> $GITHUB_PATH
-        echo "/usr/local/bin" >> $GITHUB_PATH
-        
-        # Install GCC with Fortran support
-        echo "Installing GCC..."
-        brew install gcc || echo "GCC installation completed with warnings"
-        
-        # Install OpenBLAS
-        echo "Installing OpenBLAS..."
-        brew install openblas || echo "OpenBLAS installation completed with warnings"
-        
-        # Set up OpenBLAS environment variables
-        export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
-        export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
-        export PKG_CONFIG_PATH="/opt/homebrew/opt/openblas/lib/pkgconfig"
-        
-        # Verify installations and find actual gfortran path
-        echo "=== Finding Fortran Compiler ==="
-        # Look for gfortran in various locations
-        for path in "/opt/homebrew/bin" "/usr/local/bin" "/opt/homebrew/Cellar/gcc" "/usr/local/Cellar/gcc"; do
-          if [ -d "$path" ]; then
-            echo "Checking $path for gfortran..."
-            find "$path" -name "gfortran" -type f 2>/dev/null | head -5
-          fi
-        done
-        
-        # Try to find gfortran in Homebrew Cellar
-        GFORT_PATH=$(find /opt/homebrew/Cellar/gcc -name "gfortran" -type f 2>/dev/null | head -1)
-        if [ -n "$GFORT_PATH" ]; then
-          echo "Found gfortran at: $GFORT_PATH"
-          export PATH="$(dirname $GFORT_PATH):$PATH"
-          echo "$(dirname $GFORT_PATH)" >> $GITHUB_PATH
-        fi
-        
-        # Verify gfortran works
-        echo "=== Testing gfortran ==="
-        which gfortran || echo "gfortran not found in PATH"
-        gfortran --version || echo "gfortran version check failed"
-        
-        # Test simple Fortran compilation
-        echo "=== Testing Fortran Compilation ==="
-        echo "program test" > test_fortran.f90
-        echo "write(*,*) 'Hello from Fortran!'" >> test_fortran.f90
-        echo "end program test" >> test_fortran.f90
-        
-        if gfortran -o test_fortran test_fortran.f90 2>/dev/null; then
-          echo "Fortran compilation successful"
-          ./test_fortran
-          rm -f test_fortran test_fortran.f90
-        else
-          echo "Fortran compilation failed"
-          echo "Trying with explicit path..."
-          if [ -n "$GFORT_PATH" ]; then
-            $GFORT_PATH -o test_fortran test_fortran.f90 2>/dev/null && echo "Fortran compilation with explicit path successful" || echo "Fortran compilation with explicit path failed"
-            rm -f test_fortran test_fortran.f90
-          fi
-        fi
-        
-        # Export OpenBLAS environment variables for subsequent steps
-        echo "LDFLAGS=-L/opt/homebrew/opt/openblas/lib" >> $GITHUB_ENV
-        echo "CPPFLAGS=-I/opt/homebrew/opt/openblas/include" >> $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=/opt/homebrew/opt/openblas/lib/pkgconfig" >> $GITHUB_ENV
 
     - name: Configure build
       run: |
-        if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          # Set up environment for macOS
-          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-          
-          # Find actual gfortran path
-          GFORT_PATH=$(find /opt/homebrew/Cellar/gcc -name "gfortran" -type f 2>/dev/null | head -1)
-          if [ -n "$GFORT_PATH" ]; then
-            echo "Using gfortran from: $GFORT_PATH"
-            export PATH="$(dirname $GFORT_PATH):$PATH"
-            export FC="$GFORT_PATH"
-            export F77="$GFORT_PATH"
-          else
-            echo "Using gfortran from PATH"
-            export FC=gfortran
-            export F77=gfortran
-          fi
-          
-          export CC=gcc
-          # Set up OpenBLAS environment variables
-          export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
-          export PKG_CONFIG_PATH="/opt/homebrew/opt/openblas/lib/pkgconfig"
-          
-          # Verify compilers are found
-          echo "=== Compiler Verification ==="
-          echo "FC: $(which $FC || echo 'NOT FOUND')"
-          echo "F77: $(which $F77 || echo 'NOT FOUND')"
-          echo "CC: $(which gcc || echo 'NOT FOUND')"
-          echo "LDFLAGS: $LDFLAGS"
-          echo "CPPFLAGS: $CPPFLAGS"
-          
-          # Test compilers
-          echo "=== Testing Compilers ==="
-          $FC --version || echo "FC version check failed"
-          $F77 --version || echo "F77 version check failed"
-          gcc --version || echo "gcc version check failed"
-          
-          # Test simple compilation
-          echo "=== Testing Simple Compilation ==="
-          echo "program test" > test_compile.f90
-          echo "write(*,*) 'Test compilation'" >> test_compile.f90
-          echo "end program test" >> test_compile.f90
-          
-          if $FC -o test_compile test_compile.f90 2>/dev/null; then
-            echo "Fortran compilation test successful"
-            ./test_compile
-            rm -f test_compile test_compile.f90
-          else
-            echo "Fortran compilation test failed"
-            rm -f test_compile test_compile.f90
-          fi
-          
-          # Configure with explicit paths and OpenBLAS
-          echo "=== Running Configure ==="
-          ./configure --prefix=$PWD/install --with-blas=openblas FC="$FC" F77="$F77" CC=gcc LDFLAGS="$LDFLAGS" CPPFLAGS="$CPPFLAGS" || {
-            echo "Configure failed, trying without OpenBLAS..."
-            ./configure --prefix=$PWD/install FC="$FC" F77="$F77" CC=gcc || {
-              echo "Configure failed completely, trying basic configure..."
-              ./configure --prefix=$PWD/install
-            }
-          }
-        elif [ "${{ matrix.blas-variant }}" = "openblas" ]; then
+        if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
         else
           ./configure --prefix=$PWD/install
@@ -200,17 +54,7 @@ jobs:
 
     - name: Build
       run: |
-        if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          # Set up environment for macOS
-          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-          export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
-          # macOS doesn't have nproc, use sysctl instead
-          CORES=$(sysctl -n hw.ncpu)
-          make -j$CORES
-        else
-          make -j$(nproc)
-        fi
+        make -j$(nproc)
 
     - name: Install
       run: |
