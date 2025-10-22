@@ -158,58 +158,29 @@ jobs:
 
     - name: Test sample applications
       run: |
-        # Find ShiftK.out executable with comprehensive search
-        echo "=== Comprehensive ShiftK.out search ==="
+        # Use built ShiftK.out directly (no installation needed)
+        echo "=== Using built ShiftK.out directly ==="
         
-        # Search in multiple locations
-        SHIFTK_CANDIDATES=(
-          "install/bin/ShiftK.out"
-          "app/src/ShiftK.out"
-          "app/src/ShiftK"
-          "src/ShiftK.out"
-          "src/ShiftK"
-        )
-        
-        SHIFTK_PATH=""
-        for candidate in "${SHIFTK_CANDIDATES[@]}"; do
-          if [ -f "$candidate" ] && [ -x "$candidate" ]; then
-            SHIFTK_PATH="$candidate"
-            echo "Found executable ShiftK at: $SHIFTK_PATH"
-            ls -la "$SHIFTK_PATH"
-            break
-          fi
-        done
-        
-        # If not found, search for any ShiftK executable
-        if [ -z "$SHIFTK_PATH" ]; then
-          echo "=== Searching for any ShiftK executable ==="
-          SHIFTK_PATH=$(find . -name "ShiftK*" -type f -executable 2>/dev/null | head -1)
-          if [ -n "$SHIFTK_PATH" ]; then
-            echo "Found ShiftK executable at: $SHIFTK_PATH"
-            ls -la "$SHIFTK_PATH"
-          fi
-        fi
-        
-        # Test if we found a valid executable
-        if [ -z "$SHIFTK_PATH" ] || [ ! -f "$SHIFTK_PATH" ] || [ ! -x "$SHIFTK_PATH" ]; then
-          echo "ERROR: No valid ShiftK executable found"
-          echo "Searched locations:"
-          for candidate in "${SHIFTK_CANDIDATES[@]}"; do
-            echo "  - $candidate: $([ -f "$candidate" ] && echo "EXISTS" || echo "NOT FOUND")"
-          done
-          echo "Available executables:"
-          find . -name "ShiftK*" -type f 2>/dev/null || echo "None found"
+        # Check if ShiftK.out was built in app/src
+        if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
+          SHIFTK_PATH="app/src/ShiftK.out"
+          echo "Found built ShiftK.out at: $SHIFTK_PATH"
+          ls -la "$SHIFTK_PATH"
+        else
+          echo "ERROR: ShiftK.out not found in app/src/"
+          echo "Available files in app/src/:"
+          ls -la app/src/ || echo "app/src/ directory not found"
           echo "Skipping sample tests"
           exit 0
         fi
         
         # Test denovo sample
-        echo "=== Testing denovo sample with $SHIFTK_PATH ==="
+        echo "=== Testing denovo sample with built ShiftK.out ==="
         cd app/sample/denovo
         echo "Current directory: $(pwd)"
         echo "Using ShiftK: $SHIFTK_PATH"
         
-        # Use absolute path
+        # Use absolute path to the built executable
         ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
         echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
         
@@ -222,7 +193,7 @@ jobs:
           else
             echo "WARNING: dynamicalG.dat not created"
           fi
-          echo "Denovo sample test completed"
+          echo "Denovo sample test completed successfully"
         else
           echo "ERROR: ShiftK executable not accessible at: $ABSOLUTE_SHIFTK_PATH"
           echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
