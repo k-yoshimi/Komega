@@ -44,22 +44,32 @@ jobs:
         fi
 
 
-    - name: Regenerate autotools files
+    - name: Clean and regenerate autotools files
       run: |
-        echo "=== Regenerating autotools files ==="
+        echo "=== Cleaning and regenerating autotools files ==="
+        # Clean all generated files
+        make clean || echo "make clean failed, continuing..."
+        make distclean || echo "make distclean failed, continuing..."
+        
         # Remove all autotools generated files
-        rm -f aclocal.m4 configure Makefile.in
+        rm -f aclocal.m4 configure config.h config.h.in
         find . -name "Makefile.in" -delete
-        find . -name "config.h.in" -delete
+        find . -name "*.o" -delete
+        find . -name "*.lo" -delete
+        find . -name "*.la" -delete
+        find . -name ".deps" -type d -exec rm -rf {} + 2>/dev/null || true
         
         # Regenerate with current system autotools version
+        echo "=== Running autoreconf -fi ==="
         autoreconf -fi
         
-        # Fix any remaining aclocal-1.15 references in generated files
-        echo "=== Fixing aclocal-1.15 references ==="
-        find . -name "Makefile" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
-        find . -name "configure" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
-        find . -name "*.in" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
+        # Verify that aclocal-1.15 references are gone
+        echo "=== Checking for aclocal-1.15 references ==="
+        if grep -r "aclocal-1\.15" . --include="*.m4" --include="configure" --include="Makefile*" 2>/dev/null; then
+          echo "WARNING: Found aclocal-1.15 references in generated files"
+        else
+          echo "SUCCESS: No aclocal-1.15 references found"
+        fi
         
     - name: Configure build
       run: |
@@ -71,11 +81,6 @@ jobs:
 
     - name: Build
       run: |
-        # Final fix for any aclocal-1.15 references before building
-        echo "=== Final aclocal-1.15 fix ==="
-        find . -name "Makefile" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
-        
-        # Build
         make -j$(nproc)
 
     - name: Install
