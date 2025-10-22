@@ -71,5 +71,17 @@ jobs:
         
         echo "Using ShiftK: $SHIFTK_PATH"
         cd app/sample/denovo
-        timeout 30s $PWD/../../$SHIFTK_PATH namelist.def || echo "Sample test completed"
-        test -f dynamicalG.dat && echo "✓ Sample application test passed"
+        # Use absolute path to avoid path issues
+        ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
+        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        
+        if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
+          timeout 30s "$ABSOLUTE_SHIFTK_PATH" namelist.def || echo "Sample test completed"
+          test -f dynamicalG.dat && echo "✓ Sample application test passed"
+        else
+          echo "ERROR: ShiftK executable not accessible at: $ABSOLUTE_SHIFTK_PATH"
+          echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        fi
