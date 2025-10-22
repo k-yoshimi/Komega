@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop, auto_test, 'feature/*', 'test/*' ]
 
+# Disable email notifications during testing
+notifications:
+  email: false
+
 jobs:
   quick-test:
     runs-on: ubuntu-latest
