@@ -140,10 +140,18 @@ jobs:
         echo "=== Checking app directory ==="
         find app/ -name "ShiftK*" -type f || echo "ShiftK executable not found in app"
         
-        # If ShiftK.out is not in install/bin, try to find it elsewhere
-        if [ ! -f "install/bin/ShiftK.out" ]; then
-          echo "=== Searching for ShiftK.out ==="
-          find . -name "ShiftK*" -type f
+        # Check if ShiftK.out was built (either as wrapper or actual executable)
+        echo "=== Checking for ShiftK.out after installation ==="
+        if [ -f "app/src/ShiftK.out" ]; then
+          echo "ShiftK.out found in app/src/"
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            echo "ShiftK.out is a libtool wrapper script"
+            if [ -f "app/src/.libs/ShiftK.out" ]; then
+              echo "Actual executable found in app/src/.libs/ShiftK.out"
+            fi
+          fi
+        else
+          echo "ShiftK.out not found in app/src/"
         fi
 
     - name: Run tests
@@ -218,10 +226,13 @@ jobs:
         cd app/sample/denovo
         echo "Current directory: $(pwd)"
         echo "Using ShiftK: $SHIFTK_PATH"
+        echo "SHIFTK_PATH variable: $SHIFTK_PATH"
         
         # Use absolute path to the built executable
         ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
         echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
         
         if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
           echo "Executing: $ABSOLUTE_SHIFTK_PATH namelist.def"
