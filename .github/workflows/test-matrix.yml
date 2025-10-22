@@ -43,26 +43,39 @@ jobs:
           sudo apt-get install -y libopenblas-dev liblapack-dev
         fi
         
-        # Check automake version and create aclocal-1.15 symlink if needed
-        echo "Checking automake version..."
+        # Debug automake and aclocal installation
+        echo "=== Debugging automake installation ==="
+        echo "Automake version:"
         automake --version
+        echo "Aclocal version:"
+        aclocal --version
+        echo "Aclocal location:"
+        which aclocal
+        echo "Available aclocal versions:"
+        ls -la /usr/bin/aclocal* 2>/dev/null || echo "No aclocal variants found"
         
-        # Find the actual aclocal version and create symlink
-        ACLOCAL_VERSION=$(aclocal --version | head -n1 | grep -o '[0-9]\+\.[0-9]\+')
-        echo "Found aclocal version: $ACLOCAL_VERSION"
+        # Create multiple symlinks to ensure compatibility
+        echo "=== Creating aclocal symlinks ==="
+        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.15
+        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.16
+        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.14
         
-        # Create symlink for aclocal-1.15 if it doesn't exist
-        if [ ! -f /usr/bin/aclocal-1.15 ]; then
-          echo "Creating aclocal-1.15 symlink..."
-          sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.15
-        fi
+        # Verify symlinks
+        echo "=== Verifying symlinks ==="
+        ls -la /usr/bin/aclocal*
+        aclocal-1.15 --version || echo "aclocal-1.15 failed"
         
-        # Verify the symlink works
-        aclocal-1.15 --version || echo "aclocal-1.15 symlink failed"
+        # Set ACLOCAL environment variable as fallback
+        echo "ACLOCAL=/usr/bin/aclocal" >> $GITHUB_ENV
 
 
     - name: Configure build
       run: |
+        # Regenerate autotools files to avoid version conflicts
+        echo "=== Regenerating autotools files ==="
+        autoreconf -fiv || echo "autoreconf failed, continuing with existing files"
+        
+        # Configure build
         if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
         else
