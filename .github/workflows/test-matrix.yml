@@ -99,7 +99,23 @@ jobs:
 
     - name: Install
       run: |
+        echo "=== Installing libraries and applications ==="
         make install
+        
+        # Check if ShiftK.out was installed
+        echo "=== Checking installation ==="
+        ls -la install/bin/ || echo "install/bin directory not found"
+        find install/ -name "ShiftK*" -type f || echo "ShiftK executable not found in install"
+        
+        # Check if ShiftK.out exists in app directory
+        echo "=== Checking app directory ==="
+        find app/ -name "ShiftK*" -type f || echo "ShiftK executable not found in app"
+        
+        # If ShiftK.out is not in install/bin, try to find it elsewhere
+        if [ ! -f "install/bin/ShiftK.out" ]; then
+          echo "=== Searching for ShiftK.out ==="
+          find . -name "ShiftK*" -type f
+        fi
 
     - name: Run tests
       run: |
@@ -132,28 +148,33 @@ jobs:
 
     - name: Test sample applications
       run: |
-        # Check if ShiftK.out exists in install directory
-        echo "=== Checking installed files ==="
-        ls -la install/bin/ || echo "install/bin directory not found"
-        find install/ -name "ShiftK*" -type f || echo "ShiftK executable not found"
-        
-        # Check if ShiftK.out exists in app directory
-        echo "=== Checking app directory ==="
-        find app/ -name "ShiftK*" -type f || echo "ShiftK executable not found in app"
+        # Find ShiftK.out executable
+        echo "=== Searching for ShiftK.out ==="
+        SHIFTK_PATH=""
+        if [ -f "install/bin/ShiftK.out" ]; then
+          SHIFTK_PATH="install/bin/ShiftK.out"
+          echo "Found ShiftK.out in install/bin/"
+        elif [ -f "app/src/ShiftK.out" ]; then
+          SHIFTK_PATH="app/src/ShiftK.out"
+          echo "Found ShiftK.out in app/src/"
+        else
+          # Search for any ShiftK executable
+          SHIFTK_PATH=$(find . -name "ShiftK*" -type f -executable | head -1)
+          if [ -n "$SHIFTK_PATH" ]; then
+            echo "Found ShiftK executable at: $SHIFTK_PATH"
+          else
+            echo "ShiftK.out not found anywhere, skipping sample tests"
+            exit 0
+          fi
+        fi
         
         # Test denovo sample if executable exists
-        if [ -f "install/bin/ShiftK.out" ]; then
-          echo "=== Testing denovo sample ==="
+        if [ -n "$SHIFTK_PATH" ]; then
+          echo "=== Testing denovo sample with $SHIFTK_PATH ==="
           cd app/sample/denovo
-          $PWD/../../install/bin/ShiftK.out namelist.def
+          $PWD/../../$SHIFTK_PATH namelist.def
           test -f dynamicalG.dat
-        elif [ -f "app/src/ShiftK.out" ]; then
-          echo "=== Testing denovo sample with app/src/ShiftK.out ==="
-          cd app/sample/denovo
-          $PWD/../../src/ShiftK.out namelist.def
-          test -f dynamicalG.dat
-        else
-          echo "ShiftK.out not found, skipping sample tests"
+          echo "Denovo sample test completed successfully"
         fi
 
     - name: Performance benchmark
