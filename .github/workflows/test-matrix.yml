@@ -75,6 +75,13 @@ jobs:
         echo "=== Regenerating autotools files ==="
         autoreconf -fiv || echo "autoreconf failed, continuing with existing files"
         
+        # Fix aclocal-1.15 issue by modifying Makefile if needed
+        echo "=== Fixing aclocal-1.15 issue ==="
+        if [ -f "Makefile" ]; then
+          echo "Modifying Makefile to use aclocal instead of aclocal-1.15..."
+          sed -i 's/aclocal-1\.15/aclocal/g' Makefile || echo "Makefile modification failed"
+        fi
+        
         # Configure build
         if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
@@ -84,7 +91,21 @@ jobs:
 
     - name: Build
       run: |
-        make -j$(nproc)
+        # Fix aclocal-1.15 issue in Makefile before building
+        echo "=== Final aclocal-1.15 fix ==="
+        if [ -f "Makefile" ]; then
+          echo "Ensuring Makefile uses aclocal instead of aclocal-1.15..."
+          sed -i 's/aclocal-1\.15/aclocal/g' Makefile || echo "Makefile modification failed"
+          # Also check for any other aclocal version references
+          sed -i 's/aclocal-1\.[0-9]*/aclocal/g' Makefile || echo "Additional aclocal version fix failed"
+        fi
+        
+        # Build with error handling
+        echo "=== Starting build process ==="
+        make -j$(nproc) || {
+          echo "Build failed, trying with single core..."
+          make -j1
+        }
 
     - name: Install
       run: |
