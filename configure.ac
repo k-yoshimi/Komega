@@ -7,6 +7,10 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADERS([config.h])
 
+# Define required macros
+m4_ifndef([AC_MSG_FAILURE], [m4_define([AC_MSG_FAILURE], [AC_MSG_ERROR([$1])])])
+m4_ifndef([AC_MSG_WARN], [m4_define([AC_MSG_WARN], [AC_MSG_WARNING([$1])])])
+
 echo ""
 echo "  Check compiler"
 echo ""
@@ -56,7 +60,7 @@ echo ""
 echo "  Check library generation"
 echo ""
 AM_PROG_AR
-AC_PROG_LIBTOOL
+LT_INIT
 echo ""
 echo "  Check BLAS and LAPACK"
 echo ""
