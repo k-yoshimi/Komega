@@ -9,9 +9,6 @@ on:
     # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
 
-# Disable email notifications during testing
-notifications:
-  email: false
 
 jobs:
   test-matrix:
