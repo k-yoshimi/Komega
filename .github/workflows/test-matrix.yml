@@ -36,12 +36,29 @@ jobs:
       if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran autotools-dev automake autoconf libtool pkg-config
+        sudo apt-get install -y gfortran autotools-dev automake autoconf libtool pkg-config make
         if [ "${{ matrix.blas-variant }}" = "reference" ]; then
           sudo apt-get install -y libblas-dev liblapack-dev
         else
           sudo apt-get install -y libopenblas-dev liblapack-dev
         fi
+        
+        # Check automake version and create aclocal-1.15 symlink if needed
+        echo "Checking automake version..."
+        automake --version
+        
+        # Find the actual aclocal version and create symlink
+        ACLOCAL_VERSION=$(aclocal --version | head -n1 | grep -o '[0-9]\+\.[0-9]\+')
+        echo "Found aclocal version: $ACLOCAL_VERSION"
+        
+        # Create symlink for aclocal-1.15 if it doesn't exist
+        if [ ! -f /usr/bin/aclocal-1.15 ]; then
+          echo "Creating aclocal-1.15 symlink..."
+          sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.15
+        fi
+        
+        # Verify the symlink works
+        aclocal-1.15 --version || echo "aclocal-1.15 symlink failed"
 
 
     - name: Configure build
