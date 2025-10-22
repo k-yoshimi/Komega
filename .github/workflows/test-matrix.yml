@@ -56,18 +56,29 @@ jobs:
         fi
         # Install GCC with Fortran support and OpenBLAS
         brew install gcc openblas
-        # Add GCC to PATH
+        # Verify gfortran installation
+        which gfortran
+        gfortran --version
+        # Add GCC to PATH for current session
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
         echo "/opt/homebrew/bin" >> $GITHUB_PATH
         echo "/usr/local/bin" >> $GITHUB_PATH
 
     - name: Configure build
       run: |
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          # Use gfortran from Homebrew on macOS
+          # Set up environment for macOS
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           export FC=gfortran
           export F77=gfortran
           export CC=gcc
-          ./configure --prefix=$PWD/install --with-blas=openblas
+          # Verify compilers are found
+          echo "FC: $(which gfortran)"
+          echo "CC: $(which gcc)"
+          gfortran --version
+          gcc --version
+          # Configure with explicit paths
+          ./configure --prefix=$PWD/install --with-blas=openblas FC=gfortran F77=gfortran CC=gcc
         elif [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
         else
@@ -77,6 +88,8 @@ jobs:
     - name: Build
       run: |
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
+          # Set up environment for macOS
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           # macOS doesn't have nproc, use sysctl instead
           CORES=$(sysctl -n hw.ncpu)
           make -j$CORES
