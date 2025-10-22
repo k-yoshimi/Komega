@@ -12,16 +12,18 @@ include_HEADERS = komega.h
 
 lib_LTLIBRARIES = libkomega.la
 
-libkomega_la_SOURCES = komega_bicg.F90 komega_cg_r.F90 komega_cg_c.F90 komega_cocg.F90 \
-                       komega_shifted_qmr_sym.F90 komega_shifted_qmr_sym_b.F90 komega_math.F90 \
-                       komega_vals.F90
+# Order sources to ensure proper Fortran module dependencies
+libkomega_la_SOURCES = komega_vals.F90 komega_math.F90 \
+                       komega_bicg.F90 komega_cg_r.F90 komega_cg_c.F90 komega_cocg.F90 \
+                       komega_shifted_qmr_sym.F90 komega_shifted_qmr_sym_b.F90
 
 # Ensure Fortran modules are built before other targets
-BUILT_SOURCES = komega_vals.$(FC_MODEXT) komega_math.$(FC_MODEXT) \
-               komega_bicg.$(FC_MODEXT) komega_cg_c.$(FC_MODEXT) \
-               komega_cg_r.$(FC_MODEXT) komega_cocg.$(FC_MODEXT) \
-               komega_shifted_qmr_sym.$(FC_MODEXT) \
-               komega_shifted_qmr_sym_b.$(FC_MODEXT)
+# Use a simpler approach - let automake handle module dependencies
+# BUILT_SOURCES = komega_vals.$(FC_MODEXT) komega_math.$(FC_MODEXT) \
+#                komega_bicg.$(FC_MODEXT) komega_cg_c.$(FC_MODEXT) \
+#                komega_cg_r.$(FC_MODEXT) komega_cocg.$(FC_MODEXT) \
+#                komega_shifted_qmr_sym.$(FC_MODEXT) \
+#                komega_shifted_qmr_sym_b.$(FC_MODEXT)
 
 # Clean up modules.
 clean-local: clean-modules
