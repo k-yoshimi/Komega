@@ -28,9 +28,8 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
                                   If none is found, MPI is not used. Default: no])],,
             [with_mpi=no])
 if test x"$with_mpi" != xno; then
-  AX_PROG_FC_MPI(,[FCFLAGS="$FCFLAGS -D__MPI"],[
-    AC_MSG_FAILURE([MPI compiler requested, but couldn't use MPI.])
-    ])
+  AC_PROG_FC
+  FCFLAGS="$FCFLAGS -D__MPI"
 else
   AC_PROG_FC
 fi
