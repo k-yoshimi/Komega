@@ -47,10 +47,19 @@ jobs:
     - name: Regenerate autotools files
       run: |
         echo "=== Regenerating autotools files ==="
-        # Remove old autotools files to force regeneration
+        # Remove all autotools generated files
         rm -f aclocal.m4 configure Makefile.in
+        find . -name "Makefile.in" -delete
+        find . -name "config.h.in" -delete
+        
         # Regenerate with current system autotools version
         autoreconf -fi
+        
+        # Fix any remaining aclocal-1.15 references in generated files
+        echo "=== Fixing aclocal-1.15 references ==="
+        find . -name "Makefile" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
+        find . -name "configure" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
+        find . -name "*.in" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
         
     - name: Configure build
       run: |
@@ -62,6 +71,11 @@ jobs:
 
     - name: Build
       run: |
+        # Final fix for any aclocal-1.15 references before building
+        echo "=== Final aclocal-1.15 fix ==="
+        find . -name "Makefile" -exec sed -i 's/aclocal-1\.15/aclocal/g' {} \;
+        
+        # Build
         make -j$(nproc)
 
     - name: Install
