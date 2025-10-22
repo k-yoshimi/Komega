@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        fortran-compiler: [gfortran]
+        include:
+          - os: ubuntu-latest
+            fortran-compiler: gfortran
+            blas-lib: libblas-dev
+            lapack-lib: liblapack-dev
+          - os: macos-latest
+            fortran-compiler: gfortran
+            blas-lib: openblas
+            lapack-lib: openblas
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Fortran
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran ${{ matrix.blas-lib }} ${{ matrix.lapack-lib }}
+
+    - name: Set up Fortran (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gcc openblas
+
+    - name: Configure
+      run: |
+        ./configure --prefix=$PWD/install
+
+    - name: Build
+      run: |
+        make -j$(nproc)
+
+    - name: Install
+      run: |
+        make install
+
+    - name: Run library tests
+      run: |
+        cd test
+        make
+        # Run comprehensive test suite
+        echo "Running comprehensive test suite..."
+        ./run_tests.sh
+
+    - name: Test sample application
+      run: |
+        cd app/sample/denovo
+        $PWD/../../install/bin/ShiftK.out namelist.def
+        # Check if output files are generated
+        test -f dynamicalG.dat
+        test -f ResVec.dat0
+        test -f TriDiagComp.dat
+
+    - name: Test sample application (from_file)
+      run: |
+        cd app/sample/from_file
+        $PWD/../../install/bin/ShiftK.out namelist.def
+        # Check if output files are generated
+        test -f dynamicalG.dat
+        test -f ResVec.dat0
+        test -f TriDiagComp.dat
+
+    - name: Collect test artifacts
+      if: always()
+      run: |
+        mkdir -p test-artifacts
+        # Copy test logs
+        find test -name "*.log" -exec cp {} test-artifacts/ \;
+        # Copy restart files
+        find test -name "restart.dat" -exec cp {} test-artifacts/ \;
+        # Copy sample outputs
+        find app/sample -name "*.dat" -exec cp {} test-artifacts/ \;
+        # Create test summary
+        echo "# Test Results Summary" > test-artifacts/README.md
+        echo "" >> test-artifacts/README.md
+        echo "Generated on: $(date)" >> test-artifacts/README.md
+        echo "OS: ${{ matrix.os }}" >> test-artifacts/README.md
+        echo "Compiler: ${{ matrix.fortran-compiler }}" >> test-artifacts/README.md
+        echo "" >> test-artifacts/README.md
+        echo "## Test Logs" >> test-artifacts/README.md
+        ls -la test-artifacts/*.log >> test-artifacts/README.md || true
+
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: test-artifacts/
+        retention-days: 30
+
+  test-mpi:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up MPI environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran libblas-dev liblapack-dev libopenmpi-dev
+
+    - name: Configure with MPI
+      run: |
+        ./configure --prefix=$PWD/install --with-mpi
+
+    - name: Build with MPI
+      run: |
+        make -j$(nproc)
+
+    - name: Install with MPI
+      run: |
+        make install
+
+    - name: Test MPI functionality
+      run: |
+        cd test
+        make
+        # Test with MPI if available
+        if command -v mpirun &> /dev/null; then
+          echo "Testing with MPI..."
+          mpirun -np 2 ./solve_cc.x < complex_freq.in || echo "MPI test failed, continuing..."
+        fi

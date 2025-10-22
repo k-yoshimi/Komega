@@ -1,0 +1,135 @@
+name: Extended Test Matrix
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  test-matrix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest, macos-latest]
+        fortran-compiler: [gfortran]
+        blas-variant: [reference, openblas]
+        include:
+          - os: ubuntu-20.04
+            fortran-compiler: gfortran
+            blas-variant: reference
+          - os: ubuntu-22.04
+            fortran-compiler: gfortran
+            blas-variant: openblas
+          - os: ubuntu-latest
+            fortran-compiler: gfortran
+            blas-variant: openblas
+          - os: macos-latest
+            fortran-compiler: gfortran
+            blas-variant: openblas
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Fortran environment (Ubuntu)
+      if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran
+        if [ "${{ matrix.blas-variant }}" = "reference" ]; then
+          sudo apt-get install -y libblas-dev liblapack-dev
+        else
+          sudo apt-get install -y libopenblas-dev liblapack-dev
+        fi
+
+    - name: Set up Fortran environment (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gcc openblas
+
+    - name: Configure build
+      run: |
+        if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
+          ./configure --prefix=$PWD/install --with-blas=openblas
+        else
+          ./configure --prefix=$PWD/install
+        fi
+
+    - name: Build
+      run: |
+        make -j$(nproc)
+
+    - name: Install
+      run: |
+        make install
+
+    - name: Run tests
+      run: |
+        cd test
+        make
+        ./run_tests.sh
+
+    - name: Test sample applications
+      run: |
+        # Test denovo sample
+        cd app/sample/denovo
+        $PWD/../../install/bin/ShiftK.out namelist.def
+        test -f dynamicalG.dat
+        
+        # Test from_file sample
+        cd ../from_file
+        $PWD/../../install/bin/ShiftK.out namelist.def
+        test -f dynamicalG.dat
+
+    - name: Performance benchmark
+      run: |
+        cd test
+        echo "Running performance benchmarks..."
+        # Create larger test case for benchmarking
+        cat > benchmark.in << EOF
+        &input
+              ndim = 100
+                nl = 100
+                nz = 10
+           itermax = 1000
+         threshold = 1d-6
+          rnd_seed = 42
+        /
+        EOF
+        
+        # Add some complex frequencies
+        for i in {1..10}; do
+          echo "($i.0, 0.1)" >> benchmark.in
+        done
+        
+        # Run benchmark
+        time ./solve_cc.x < benchmark.in > benchmark.log 2>&1 || echo "Benchmark completed"
+
+    - name: Collect results
+      if: always()
+      run: |
+        mkdir -p results
+        # Copy all test outputs
+        find . -name "*.log" -exec cp {} results/ \;
+        find . -name "*.dat" -exec cp {} results/ \;
+        find . -name "restart.dat" -exec cp {} results/ \;
+        
+        # Create summary
+        echo "# Test Results for ${{ matrix.os }} with ${{ matrix.blas-variant }}" > results/summary.md
+        echo "Generated: $(date)" >> results/summary.md
+        echo "OS: ${{ matrix.os }}" >> results/summary.md
+        echo "BLAS: ${{ matrix.blas-variant }}" >> results/summary.md
+        echo "" >> results/summary.md
+        echo "## Files Generated" >> results/summary.md
+        ls -la results/ >> results/summary.md
+
+    - name: Upload results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.blas-variant }}
+        path: results/
+        retention-days: 7

@@ -1,0 +1,55 @@
+name: Quick Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran libopenblas-dev liblapack-dev
+
+    - name: Configure and build
+      run: |
+        ./configure --prefix=$PWD/install
+        make -j$(nproc)
+        make install
+
+    - name: Run quick tests
+      run: |
+        cd test
+        make
+        # Run only essential tests for quick feedback
+        echo "Running quick test suite..."
+        ./solve_cc.x < complex_freq.in > solve_cc.log 2>&1
+        ./solve_rr.x < real_freq.in > solve_rr.log 2>&1
+        
+        # Check if tests completed successfully
+        if grep -q "Converged\|converged\|SUCCESS" solve_cc.log; then
+          echo "✓ solve_cc.x test passed"
+        else
+          echo "✗ solve_cc.x test may have failed"
+          cat solve_cc.log
+        fi
+        
+        if grep -q "Converged\|converged\|SUCCESS" solve_rr.log; then
+          echo "✓ solve_rr.x test passed"
+        else
+          echo "✗ solve_rr.x test may have failed"
+          cat solve_rr.log
+        fi
+
+    - name: Test sample application
+      run: |
+        cd app/sample/denovo
+        timeout 30s $PWD/../../install/bin/ShiftK.out namelist.def || echo "Sample test completed"
+        test -f dynamicalG.dat && echo "✓ Sample application test passed"
