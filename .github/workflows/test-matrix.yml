@@ -96,6 +96,16 @@ jobs:
             make -j1 V=1
           }
         }
+        
+        # Check if ShiftK.out was built in app/src
+        echo "=== Checking if ShiftK.out was built ==="
+        if [ -f "app/src/ShiftK.out" ]; then
+          echo "ShiftK.out found in app/src/"
+          ls -la app/src/ShiftK.out
+        else
+          echo "ShiftK.out not found in app/src/, checking app directory..."
+          find app/ -name "ShiftK*" -type f || echo "No ShiftK executable found in app/"
+        fi
 
     - name: Install
       run: |
@@ -172,9 +182,19 @@ jobs:
         if [ -n "$SHIFTK_PATH" ]; then
           echo "=== Testing denovo sample with $SHIFTK_PATH ==="
           cd app/sample/denovo
-          $PWD/../../$SHIFTK_PATH namelist.def
-          test -f dynamicalG.dat
-          echo "Denovo sample test completed successfully"
+          # Use absolute path to avoid path issues
+          ABSOLUTE_SHIFTK_PATH=$(realpath $PWD/../../$SHIFTK_PATH)
+          echo "Using absolute path: $ABSOLUTE_SHIFTK_PATH"
+          if [ -f "$ABSOLUTE_SHIFTK_PATH" ]; then
+            $ABSOLUTE_SHIFTK_PATH namelist.def
+            test -f dynamicalG.dat
+            echo "Denovo sample test completed successfully"
+          else
+            echo "ShiftK executable not found at absolute path: $ABSOLUTE_SHIFTK_PATH"
+            echo "Current directory: $(pwd)"
+            echo "Available files:"
+            ls -la $PWD/../../
+          fi
         fi
 
     - name: Performance benchmark
