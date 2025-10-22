@@ -56,6 +56,13 @@ jobs:
           eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
         
+        # Ensure Homebrew environment is properly set up
+        echo "Setting up Homebrew environment..."
+        eval "$(/opt/homebrew/bin/brew shellenv)" || echo "Homebrew shellenv failed"
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+        echo "Current PATH: $PATH"
+        echo "Homebrew location: $(which brew)"
+        
         # Set up PATH for Homebrew
         export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
         echo "/opt/homebrew/bin" >> $GITHUB_PATH

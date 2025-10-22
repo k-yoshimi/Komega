@@ -43,6 +43,13 @@ jobs:
           eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
         
+        # Ensure Homebrew environment is properly set up
+        echo "Setting up Homebrew environment..."
+        eval "$(/opt/homebrew/bin/brew shellenv)" || echo "Homebrew shellenv failed"
+        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+        echo "Current PATH: $PATH"
+        echo "Homebrew location: $(which brew)"
+        
         # Set up PATH for Homebrew
         export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
         echo "/opt/homebrew/bin" >> $GITHUB_PATH
@@ -71,12 +78,38 @@ jobs:
           fi
         done
         
-        # Try to find gfortran in Homebrew Cellar
-        GFORT_PATH=$(find /opt/homebrew/Cellar/gcc -name "gfortran" -type f 2>/dev/null | head -1)
+        # Try to find gfortran in Homebrew Cellar with more comprehensive search
+        echo "=== Comprehensive gfortran search ==="
+        GFORT_PATH=""
+        
+        # Search in multiple locations
+        for search_path in "/opt/homebrew/Cellar/gcc" "/usr/local/Cellar/gcc" "/opt/homebrew/bin" "/usr/local/bin"; do
+          if [ -d "$search_path" ]; then
+            echo "Searching in $search_path..."
+            found_gfort=$(find "$search_path" -name "gfortran" -type f 2>/dev/null | head -1)
+            if [ -n "$found_gfort" ]; then
+              echo "Found gfortran at: $found_gfort"
+              GFORT_PATH="$found_gfort"
+              break
+            fi
+          fi
+        done
+        
+        # If found, set up PATH
         if [ -n "$GFORT_PATH" ]; then
-          echo "Found gfortran at: $GFORT_PATH"
-          export PATH="$(dirname $GFORT_PATH):$PATH"
-          echo "$(dirname $GFORT_PATH)" >> $GITHUB_PATH
+          GFORT_DIR="$(dirname $GFORT_PATH)"
+          echo "Adding $GFORT_DIR to PATH"
+          export PATH="$GFORT_DIR:$PATH"
+          echo "$GFORT_DIR" >> $GITHUB_PATH
+          
+          # Test the found gfortran
+          echo "Testing found gfortran: $GFORT_PATH"
+          $GFORT_PATH --version || echo "Found gfortran but version check failed"
+        else
+          echo "gfortran not found in any location"
+          # Try to find any gfortran in the system
+          echo "Searching entire system for gfortran..."
+          find /opt /usr -name "gfortran" -type f 2>/dev/null | head -5
         fi
         
         # Verify gfortran works
@@ -114,15 +147,31 @@ jobs:
           # Set up environment for macOS
           export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
           
-          # Find actual gfortran path
-          GFORT_PATH=$(find /opt/homebrew/Cellar/gcc -name "gfortran" -type f 2>/dev/null | head -1)
+          # Find actual gfortran path with comprehensive search
+          echo "=== Re-searching for gfortran in configure step ==="
+          GFORT_PATH=""
+          
+          # Search in multiple locations
+          for search_path in "/opt/homebrew/Cellar/gcc" "/usr/local/Cellar/gcc" "/opt/homebrew/bin" "/usr/local/bin"; do
+            if [ -d "$search_path" ]; then
+              echo "Searching in $search_path..."
+              found_gfort=$(find "$search_path" -name "gfortran" -type f 2>/dev/null | head -1)
+              if [ -n "$found_gfort" ]; then
+                echo "Found gfortran at: $found_gfort"
+                GFORT_PATH="$found_gfort"
+                break
+              fi
+            fi
+          done
+          
+          # Set up compilers
           if [ -n "$GFORT_PATH" ]; then
             echo "Using gfortran from: $GFORT_PATH"
             export PATH="$(dirname $GFORT_PATH):$PATH"
             export FC="$GFORT_PATH"
             export F77="$GFORT_PATH"
           else
-            echo "Using gfortran from PATH"
+            echo "Using gfortran from PATH (may not work)"
             export FC=gfortran
             export F77=gfortran
           fi
