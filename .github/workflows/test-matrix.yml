@@ -99,11 +99,9 @@ jobs:
         
         # Test simple Fortran compilation
         echo "=== Testing Fortran Compilation ==="
-        cat > test_fortran.f90 << 'EOF'
-program test
-write(*,*) 'Hello from Fortran!'
-end program test
-EOF
+        echo "program test" > test_fortran.f90
+        echo "write(*,*) 'Hello from Fortran!'" >> test_fortran.f90
+        echo "end program test" >> test_fortran.f90
         
         if gfortran -o test_fortran test_fortran.f90 2>/dev/null; then
           echo "Fortran compilation successful"
@@ -164,11 +162,9 @@ EOF
           
           # Test simple compilation
           echo "=== Testing Simple Compilation ==="
-          cat > test_compile.f90 << 'EOF'
-program test
-write(*,*) 'Test compilation'
-end program test
-EOF
+          echo "program test" > test_compile.f90
+          echo "write(*,*) 'Test compilation'" >> test_compile.f90
+          echo "end program test" >> test_compile.f90
           
           if $FC -o test_compile test_compile.f90 2>/dev/null; then
             echo "Fortran compilation test successful"
