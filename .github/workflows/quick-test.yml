@@ -2,9 +2,9 @@ name: Quick Test
 
 on:
   push:
-    branches: [ main, develop, auto_test, 'feature/*', 'test/*' ]
+    branches: [ main, master, develop, auto_test, 'feature/*', 'test/*' ]
   pull_request:
-    branches: [ main, develop, auto_test, 'feature/*', 'test/*' ]
+    branches: [ main, master, develop, auto_test, 'feature/*', 'test/*' ]
 
 
 jobs:
