@@ -41,27 +41,23 @@ AC_ARG_WITH(openmp, [AS_HELP_STRING([--with-openmp],
                                   If none is found, OpenMP is not used. Default: yes])],,
             [with_openmp=yes])
 if test x"$with_openmp" != xno; then
-  AX_OPENMP([FCFLAGS="$FCFLAGS $OPENMP_CFLAGS"],[
-      AC_MSG_WARN([OpenMP requested, but couldn't use OpenMP.])
-  ])
+  # Check for OpenMP support
+  AC_LANG_PUSH([Fortran])
+  AC_OPENMP
+  if test x"$ac_cv_prog_c_openmp" = xyes; then
+    FCFLAGS="$FCFLAGS $OPENMP_CFLAGS"
+  else
+    AC_MSG_WARN([OpenMP requested, but couldn't use OpenMP.])
+  fi
+  AC_LANG_POP([Fortran])
 fi
 echo ""
 echo "  Check fortran module"
 echo ""
-# Find out how to add to the Fortran include path.
-AX_F90_MODULE_FLAG
-# The module flag may be "-I " or so, and some make implementations
-# swallow trailing space in variable settings, so we employ a little
-# trick.
-AC_SUBST([empty], [""])
-AC_SUBST([FC_MODINC], [$ax_cv_f90_modflag'${empty}'])
-# Find out the file name extensions of Fortran module files.
-AX_F90_MODULE_EXTENSION
-if test "x$ax_f90_modext" != xunknown; then
-  FC_MODEXT=$ax_cv_f90_modext
-else
-  FC_MODEXT=$ax_cv_f90_modext
-fi
+# Set up Fortran module support
+FC_MODINC="-I"
+FC_MODEXT="mod"
+AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODEXT])
 echo ""
 echo "  Check library generation"
