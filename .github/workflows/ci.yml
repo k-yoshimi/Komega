@@ -26,7 +26,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Fortran
+    - name: Set up Fortran (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
@@ -35,15 +35,39 @@ jobs:
     - name: Set up Fortran (macOS)
       if: matrix.os == 'macos-latest'
       run: |
+        # Install Homebrew if not present
+        if ! command -v brew &> /dev/null; then
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
+        # Install GCC with Fortran support and OpenBLAS
         brew install gcc openblas
+        # Add GCC to PATH
+        echo "/opt/homebrew/bin" >> $GITHUB_PATH
+        echo "/usr/local/bin" >> $GITHUB_PATH
 
     - name: Configure
       run: |
-        ./configure --prefix=$PWD/install
+        if [ "${{ matrix.os }}" = "macos-latest" ]; then
+          # Use gfortran from Homebrew on macOS
+          export FC=gfortran
+          export F77=gfortran
+          export CC=gcc
+          ./configure --prefix=$PWD/install --with-blas=openblas
+        else
+          ./configure --prefix=$PWD/install
+        fi
 
     - name: Build
       run: |
-        make -j$(nproc)
+        if [ "${{ matrix.os }}" = "macos-latest" ]; then
+          # macOS doesn't have nproc, use sysctl instead
+          CORES=$(sysctl -n hw.ncpu)
+          make -j$CORES
+        else
+          make -j$(nproc)
+        fi
 
     - name: Install
       run: |
