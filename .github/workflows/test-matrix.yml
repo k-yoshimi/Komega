@@ -85,7 +85,11 @@ jobs:
 
     - name: Build
       run: |
-        make -j$(nproc)
+        # Build with verbose output to see detailed errors
+        make -j$(nproc) V=1 || {
+          echo "Parallel build failed, trying single-threaded build..."
+          make -j1 V=1
+        }
 
     - name: Install
       run: |
