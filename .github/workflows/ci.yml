@@ -42,7 +42,11 @@ jobs:
           eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
         # Install GCC with Fortran support and OpenBLAS
-        brew install gcc openblas
+        brew install gcc openblas || true
+        # Set up OpenBLAS environment variables
+        export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
+        export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
+        export PKG_CONFIG_PATH="/opt/homebrew/opt/openblas/lib/pkgconfig"
         # Verify gfortran installation
         which gfortran
         gfortran --version
@@ -50,6 +54,10 @@ jobs:
         export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
         echo "/opt/homebrew/bin" >> $GITHUB_PATH
         echo "/usr/local/bin" >> $GITHUB_PATH
+        # Export OpenBLAS environment variables for subsequent steps
+        echo "LDFLAGS=-L/opt/homebrew/opt/openblas/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I/opt/homebrew/opt/openblas/include" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=/opt/homebrew/opt/openblas/lib/pkgconfig" >> $GITHUB_ENV
 
     - name: Configure
       run: |
@@ -59,13 +67,19 @@ jobs:
           export FC=gfortran
           export F77=gfortran
           export CC=gcc
+          # Set up OpenBLAS environment variables
+          export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/openblas/lib/pkgconfig"
           # Verify compilers are found
           echo "FC: $(which gfortran)"
           echo "CC: $(which gcc)"
+          echo "LDFLAGS: $LDFLAGS"
+          echo "CPPFLAGS: $CPPFLAGS"
           gfortran --version
           gcc --version
-          # Configure with explicit paths
-          ./configure --prefix=$PWD/install --with-blas=openblas FC=gfortran F77=gfortran CC=gcc
+          # Configure with explicit paths and OpenBLAS
+          ./configure --prefix=$PWD/install --with-blas=openblas FC=gfortran F77=gfortran CC=gcc LDFLAGS="$LDFLAGS" CPPFLAGS="$CPPFLAGS"
         else
           ./configure --prefix=$PWD/install
         fi
@@ -75,6 +89,8 @@ jobs:
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
           # Set up environment for macOS
           export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          export LDFLAGS="-L/opt/homebrew/opt/openblas/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/openblas/include"
           # macOS doesn't have nproc, use sysctl instead
           CORES=$(sysctl -n hw.ncpu)
           make -j$CORES
