@@ -100,11 +100,30 @@ jobs:
         # Check if ShiftK.out was built in app/src
         echo "=== Checking if ShiftK.out was built ==="
         if [ -f "app/src/ShiftK.out" ]; then
-          echo "ShiftK.out found in app/src/"
+          echo "SUCCESS: ShiftK.out found in app/src/"
           ls -la app/src/ShiftK.out
+          file app/src/ShiftK.out
+          # Check if it's a libtool wrapper script
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            echo "ShiftK.out is a libtool wrapper script"
+            # Check for the actual executable in .libs directory
+            if [ -f "app/src/.libs/ShiftK.out" ]; then
+              echo "Actual executable found in app/src/.libs/ShiftK.out"
+              ls -la app/src/.libs/ShiftK.out
+              file app/src/.libs/ShiftK.out
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+            fi
+          fi
         else
-          echo "ShiftK.out not found in app/src/, checking app directory..."
-          find app/ -name "ShiftK*" -type f || echo "No ShiftK executable found in app/"
+          echo "ERROR: ShiftK.out not found in app/src/"
+          echo "Checking app directory structure..."
+          ls -la app/ || echo "app/ directory not found"
+          ls -la app/src/ || echo "app/src/ directory not found"
+          echo "Searching for any ShiftK executable..."
+          find . -name "ShiftK*" -type f || echo "No ShiftK executable found"
+          echo "Checking build logs for errors..."
+          echo "Build completed but ShiftK.out was not created"
         fi
 
     - name: Install
@@ -163,15 +182,35 @@ jobs:
         
         # Check if ShiftK.out was built in app/src
         if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
-          SHIFTK_PATH="app/src/ShiftK.out"
-          echo "Found built ShiftK.out at: $SHIFTK_PATH"
-          ls -la "$SHIFTK_PATH"
+          # Check if it's a libtool wrapper script
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            echo "ShiftK.out is a libtool wrapper script, checking for actual executable"
+            if [ -f "app/src/.libs/ShiftK.out" ] && [ -x "app/src/.libs/ShiftK.out" ]; then
+              SHIFTK_PATH="app/src/.libs/ShiftK.out"
+              echo "Found actual executable at: $SHIFTK_PATH"
+              ls -la "$SHIFTK_PATH"
+              file "$SHIFTK_PATH"
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+              echo "Available files in app/src/.libs/:"
+              ls -la app/src/.libs/ || echo "app/src/.libs/ directory not found"
+              echo "Skipping sample tests"
+              exit 1
+            fi
+          else
+            SHIFTK_PATH="app/src/ShiftK.out"
+            echo "Found built ShiftK.out at: $SHIFTK_PATH"
+            ls -la "$SHIFTK_PATH"
+            file "$SHIFTK_PATH"
+          fi
         else
           echo "ERROR: ShiftK.out not found in app/src/"
+          echo "This indicates the build process failed to create ShiftK.out"
           echo "Available files in app/src/:"
           ls -la app/src/ || echo "app/src/ directory not found"
+          echo "Build process may have failed - check build logs above"
           echo "Skipping sample tests"
-          exit 0
+          exit 1
         fi
         
         # Test denovo sample
