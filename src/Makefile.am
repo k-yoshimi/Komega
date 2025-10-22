@@ -20,12 +20,13 @@ clean-local: clean-modules
 clean-modules:
 	test -z "$(FC_MODEXT)" || $(RM) *.$(FC_MODEXT)
 
-komega_bicg.lo : komega_bicg.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo 
-komega_cg_c.lo : komega_cg_c.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo 
-komega_cg_r.lo : komega_cg_r.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo 
-komega_cocg.lo : komega_cocg.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo 
-komega_shifted_qmr_sym.lo : komega_shifted_qmr_sym.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo
-komega_shifted_qmr_sym_b.lo : komega_shifted_qmr_sym_b.F90 komega_math.lo komega_vals.lo komega_vals.lo komega_vals.lo
+# Fix dependency order - build komega_vals first, then komega_math, then others
+komega_vals.lo : komega_vals.F90
 komega_math.lo : komega_math.F90 komega_vals.lo
-komega_vals.lo : komega_vals.F90 
+komega_bicg.lo : komega_bicg.F90 komega_math.lo komega_vals.lo
+komega_cg_c.lo : komega_cg_c.F90 komega_math.lo komega_vals.lo
+komega_cg_r.lo : komega_cg_r.F90 komega_math.lo komega_vals.lo
+komega_cocg.lo : komega_cocg.F90 komega_math.lo komega_vals.lo
+komega_shifted_qmr_sym.lo : komega_shifted_qmr_sym.F90 komega_math.lo komega_vals.lo
+komega_shifted_qmr_sym_b.lo : komega_shifted_qmr_sym_b.F90 komega_math.lo komega_vals.lo 
 
