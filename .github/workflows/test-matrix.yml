@@ -47,14 +47,13 @@ jobs:
     - name: Regenerate autotools files
       run: |
         echo "=== Regenerating autotools files ==="
-        # Set ACLOCAL environment variable to use aclocal instead of aclocal-1.15
-        export ACLOCAL=aclocal
+        # Remove old autotools files to force regeneration
+        rm -f aclocal.m4 configure Makefile.in
+        # Regenerate with current system autotools version
         autoreconf -fi
         
     - name: Configure build
       run: |
-        # Set ACLOCAL environment variable to use aclocal instead of aclocal-1.15
-        export ACLOCAL=aclocal
         if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
         else
