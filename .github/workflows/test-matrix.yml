@@ -42,47 +42,15 @@ jobs:
         else
           sudo apt-get install -y libopenblas-dev liblapack-dev
         fi
-        
-        # Debug automake and aclocal installation
-        echo "=== Debugging automake installation ==="
-        echo "Automake version:"
-        automake --version
-        echo "Aclocal version:"
-        aclocal --version
-        echo "Aclocal location:"
-        which aclocal
-        echo "Available aclocal versions:"
-        ls -la /usr/bin/aclocal* 2>/dev/null || echo "No aclocal variants found"
-        
-        # Create multiple symlinks to ensure compatibility
-        echo "=== Creating aclocal symlinks ==="
-        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.15
-        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.16
-        sudo ln -sf /usr/bin/aclocal /usr/bin/aclocal-1.14
-        
-        # Verify symlinks
-        echo "=== Verifying symlinks ==="
-        ls -la /usr/bin/aclocal*
-        aclocal-1.15 --version || echo "aclocal-1.15 failed"
-        
-        # Set ACLOCAL environment variable as fallback
-        echo "ACLOCAL=/usr/bin/aclocal" >> $GITHUB_ENV
 
 
+    - name: Regenerate autotools files
+      run: |
+        echo "=== Regenerating autotools files ==="
+        autoreconf -fi
+        
     - name: Configure build
       run: |
-        # Regenerate autotools files to avoid version conflicts
-        echo "=== Regenerating autotools files ==="
-        autoreconf -fiv || echo "autoreconf failed, continuing with existing files"
-        
-        # Fix aclocal-1.15 issue by modifying Makefile if needed
-        echo "=== Fixing aclocal-1.15 issue ==="
-        if [ -f "Makefile" ]; then
-          echo "Modifying Makefile to use aclocal instead of aclocal-1.15..."
-          sed -i 's/aclocal-1\.15/aclocal/g' Makefile || echo "Makefile modification failed"
-        fi
-        
-        # Configure build
         if [ "${{ matrix.blas-variant }}" = "openblas" ]; then
           ./configure --prefix=$PWD/install --with-blas=openblas
         else
@@ -91,21 +59,7 @@ jobs:
 
     - name: Build
       run: |
-        # Fix aclocal-1.15 issue in Makefile before building
-        echo "=== Final aclocal-1.15 fix ==="
-        if [ -f "Makefile" ]; then
-          echo "Ensuring Makefile uses aclocal instead of aclocal-1.15..."
-          sed -i 's/aclocal-1\.15/aclocal/g' Makefile || echo "Makefile modification failed"
-          # Also check for any other aclocal version references
-          sed -i 's/aclocal-1\.[0-9]*/aclocal/g' Makefile || echo "Additional aclocal version fix failed"
-        fi
-        
-        # Build with error handling
-        echo "=== Starting build process ==="
-        make -j$(nproc) || {
-          echo "Build failed, trying with single core..."
-          make -j1
-        }
+        make -j$(nproc)
 
     - name: Install
       run: |
