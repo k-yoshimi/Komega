@@ -51,6 +51,25 @@ jobs:
 
     - name: Test sample application
       run: |
+        # Find ShiftK.out executable (check for libtool wrapper or actual executable)
+        if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            # It's a libtool wrapper script, use the actual executable
+            if [ -f "app/src/.libs/ShiftK.out" ] && [ -x "app/src/.libs/ShiftK.out" ]; then
+              SHIFTK_PATH="app/src/.libs/ShiftK.out"
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+              exit 1
+            fi
+          else
+            SHIFTK_PATH="app/src/ShiftK.out"
+          fi
+        else
+          echo "ERROR: ShiftK.out not found in app/src/"
+          exit 1
+        fi
+        
+        echo "Using ShiftK: $SHIFTK_PATH"
         cd app/sample/denovo
-        timeout 30s $PWD/../../install/bin/ShiftK.out namelist.def || echo "Sample test completed"
+        timeout 30s $PWD/../../$SHIFTK_PATH namelist.def || echo "Sample test completed"
         test -f dynamicalG.dat && echo "✓ Sample application test passed"
