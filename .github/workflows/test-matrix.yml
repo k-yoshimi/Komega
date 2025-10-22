@@ -2,9 +2,9 @@ name: Extended Test Matrix
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, auto_test, 'feature/*', 'test/*' ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, auto_test, 'feature/*', 'test/*' ]
   schedule:
     # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
