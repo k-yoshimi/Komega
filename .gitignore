@@ -430,3 +430,4 @@ stamp-h1
 *.lo
 *.so.*
 *.lai
+.github/workflows/python-tests.yml
