@@ -133,7 +133,11 @@ END SUBROUTINE komega_COCG_seed_switch
 !
 ! Allocate & initialize variables
 !
+#if defined(__MPI)
 SUBROUTINE komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0, comm0) BIND(C)
+#else
+SUBROUTINE komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0) BIND(C)
+#endif
   !
   USE ISO_C_BINDING
   USE komega_parameter, ONLY : iter, itermax, ndim, nl, nz, &
@@ -149,7 +153,9 @@ SUBROUTINE komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0, comm0)
   REAL(C_DOUBLE),INTENT(IN) :: threshold0
   COMPLEX(C_DOUBLE_COMPLEX),INTENT(IN) :: z0(nz0)
   COMPLEX(C_DOUBLE_COMPLEX),INTENT(OUT) :: x(nl0,nz0)
-  INTEGER(C_INT),INTENT(IN),OPTIONAL :: comm0
+#if defined(__MPI)
+  INTEGER(C_INT),INTENT(IN) :: comm0
+#endif
   !
   ndim = ndim0
   nl = nl0
@@ -158,10 +164,10 @@ SUBROUTINE komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0, comm0)
   threshold = threshold0
   !
   comm = 0
-  IF(PRESENT(comm0)) comm = comm0
   lmpi = .FALSE.
 #if defined(__MPI)
-  IF(PRESENT(comm0)) lmpi = .TRUE.
+  comm = comm0
+  lmpi = .TRUE.
 #endif
   !
   ALLOCATE(z(nz), v3(ndim), pi(nz), pi_old(nz), p(nl,nz), lz_conv(nz))
@@ -189,8 +195,13 @@ END SUBROUTINE komega_COCG_init
 !
 ! Restart by input
 !
+#if defined(__MPI)
 SUBROUTINE komega_COCG_restart(ndim0, nl0, nz0, x, z0, itermax0, threshold0, status, &
 & iter_old, v2, v12, alpha_save0, beta_save0, z_seed0, r_l_save0, comm0) BIND(C)
+#else
+SUBROUTINE komega_COCG_restart(ndim0, nl0, nz0, x, z0, itermax0, threshold0, status, &
+& iter_old, v2, v12, alpha_save0, beta_save0, z_seed0, r_l_save0) BIND(C)
+#endif
   !
   USE ISO_C_BINDING
   USE komega_parameter, ONLY : iter, itermax, ndim, nl, threshold, iz_seed, lz_conv, nz, resnorm
@@ -205,7 +216,9 @@ SUBROUTINE komega_COCG_restart(ndim0, nl0, nz0, x, z0, itermax0, threshold0, sta
   COMPLEX(C_DOUBLE_COMPLEX),INTENT(IN) :: z0(nz0)
   COMPLEX(C_DOUBLE_COMPLEX),INTENT(OUT) :: x(nl0,nz0)
   INTEGER(C_INT),INTENT(OUT) :: status(3)
-  INTEGER(C_INT),INTENT(IN),OPTIONAL :: comm0
+#if defined(__MPI)
+  INTEGER(C_INT),INTENT(IN) :: comm0
+#endif
   !
   ! For Restarting
   !
@@ -217,11 +230,11 @@ SUBROUTINE komega_COCG_restart(ndim0, nl0, nz0, x, z0, itermax0, threshold0, sta
   !
   INTEGER :: iz
   !
-  IF(PRESENT(comm0)) THEN
+#if defined(__MPI)
      CALL komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0, comm0)
-  ELSE
+#else
      CALL komega_COCG_init(ndim0, nl0, nz0, x, z0, itermax0, threshold0)
-  END IF
+#endif
   z_seed = z_seed0
   iz_seed = 0
   !

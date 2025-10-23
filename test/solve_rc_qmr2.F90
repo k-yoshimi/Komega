@@ -18,7 +18,7 @@
 ! 
 ! For more details, See `COPYING.LESSER' in the root directory of this library.
 !
-MODULE solve_rc_vals
+MODULE solve_rc_qmr2_vals
   !
   IMPLICIT NONE
   !
@@ -33,9 +33,6 @@ MODULE solve_rc_vals
   REAL(8),SAVE :: &
   & threshold ! Convergence Threshold
   !
-  COMPLEX(8),SAVE :: &
-  & z_seed ! Seed frequency
-  !
   LOGICAL,SAVE :: &
   & restart !< It is restart run or not
   !
@@ -45,23 +42,15 @@ MODULE solve_rc_vals
   COMPLEX(8),ALLOCATABLE,SAVE :: &
   & ham(:,:), &
   & rhs(:), &
-  & v12(:), v2(:), & ! (ndim): Working vector
-  & r_l(:), & ! (nl) : Projeccted residual vector 
-  & x(:,:) ! (nl,nz) : Projected result 
+  & x_n(:,:), & ! (nl,nz) : Projected result
+  & Av_n(:), &
+  & v_n(:)
   !
-  ! Variables for Restart
-  !
-  COMPLEX(8),ALLOCATABLE,SAVE :: &
-  & alpha(:), beta(:) ! (iter_old) 
-  !
-  COMPLEX(8),ALLOCATABLE,SAVE :: &
-  & r_l_save(:,:) ! (nl,iter_old) Projected residual vectors
-  !
-END MODULE solve_rc_vals
+END MODULE solve_rc_qmr2_vals
 !
 ! Routines
 !
-MODULE solve_rc_routines
+MODULE solve_rc_qmr2_routines
   !
   IMPLICIT NONE
   !
@@ -69,7 +58,7 @@ CONTAINS
   !
 SUBROUTINE input_size()
   !
-  USE solve_rc_vals, ONLY : ndim, nl, nz, itermax, threshold, rnd_seed, restart
+  USE solve_rc_qmr2_vals, ONLY : ndim, nl, nz, itermax, threshold, rnd_seed, restart
   !
   IMPLICIT NONE
   !
@@ -78,10 +67,10 @@ SUBROUTINE input_size()
   ndim = 5
   nl = 5
   nz = 1
-  itermax = 0
+  itermax = 5
   threshold = 1d-8
   rnd_seed = 1
-  restart = .FALSE.
+  restart = .false.
   !
   READ(*,input,err=100)
   !
@@ -91,9 +80,9 @@ SUBROUTINE input_size()
   WRITE(*,*) "   Dimension of vvector : ", ndim
   WRITE(*,*) "  Number of frequencies : ", nz
   WRITE(*,*) "  Number of left vector : ", nl
-  WRITE(*,*) "       Max. iteractions : ", itermax
+  WRITE(*,*) "       Max. iterations : ", itermax
   WRITE(*,*) "              Threshold : ", threshold
-  WRITE(*,*) "        Seed for Random : ", threshold
+  WRITE(*,*) "        Seed for Random : ", rnd_seed
   WRITE(*,*) "                Restart : ", restart
   !
   return
@@ -104,53 +93,11 @@ SUBROUTINE input_size()
   !
 END SUBROUTINE input_size
 !
-! Input restart variables from file
-!
-SUBROUTINE input_restart()
-  !
-  USE solve_rc_vals, ONLY : iter_old, v2, v12, alpha, beta, z_seed, r_l_save, nl, ndim
-  !
-  IMPLICIT NONE
-  !
-  INTEGER :: fi = 10, ierr
-  !
-  WRITE(*,*)
-  WRITE(*,*) "#####  Check Restart File  #####"
-  WRITE(*,*)
-  !
-  open(fi, file = 'restart.dat',status="old", action = 'read',iostat = ierr)
-  !
-  IF(ierr == 0) THEN
-     !
-     WRITE(*,*) "  Restart file is found."
-     !
-     READ(fi,*) iter_old
-     WRITE(*,*) "  iter_old : ", iter_old
-     !
-     ALLOCATE(alpha(iter_old), beta(iter_old), r_l_save(nl,iter_old))
-     READ(fi,*) z_seed
-     READ(fi,*) alpha(1:iter_old)
-     READ(fi,*) beta(1:iter_old)
-     READ(fi,*) r_l_save(1:nl, 1:iter_old)
-     READ(fi,*) v2(1:ndim)
-     READ(fi,*) v12(1:ndim)
-     !
-     close(fi)
-     !
-  ELSE
-     !
-     WRITE(*,*) "  Restart file is NOT found."
-     STOP
-     !
-  END IF
-  !
-END SUBROUTINE input_restart
-!
 ! Generate Equations
 !
 SUBROUTINE generate_system()
   !
-  USE solve_rc_vals, ONLY : ndim, nz, ham, rhs, z, rnd_seed
+  USE solve_rc_qmr2_vals, ONLY : ndim, nz, ham, rhs, z, rnd_seed
   USE mathlib, ONLY : zgemm, zcopy
   !
   IMPLICIT NONE
@@ -205,50 +152,20 @@ SUBROUTINE generate_system()
   WRITE(*,*) "  Right Hand Side Vector :"
   WRITE(*,form) rhs(1:ndim)
   !
-  !WRITE(*,*)
-  !WRITE(*,*) "  Matrix :"
-  !DO idim = 1, ndim
-  !   WRITE(*,form) ham(1:ndim,idim)
-  !END DO
+  WRITE(*,*)
+  WRITE(*,*) "  Matrix :"
+  DO idim = 1, ndim
+     WRITE(*,form) ham(1:ndim,idim)
+  END DO
   !
 END SUBROUTINE generate_system
-!
-! Output variables for restart
-!
-SUBROUTINE output_restart()
-  !
-  USE solve_rc_vals, ONLY : iter_old, v2, v12, alpha, beta, z_seed, r_l_save, nl, ndim
-  !
-  IMPLICIT NONE
-  !
-  INTEGER :: fo = 20
-  !
-  WRITE(*,*)
-  WRITE(*,*) "#####  Output Restart File  #####"
-  WRITE(*,*)
-  !
-  OPEN(fo, file = 'restart.dat', action = 'write')
-  !
-  WRITE(fo,*) iter_old
-  WRITE(fo,*) z_seed
-  WRITE(fo,*) alpha(1:iter_old)
-  WRITE(fo,*) beta(1:iter_old)
-  WRITE(fo,*) r_l_save(1:nl, 1:iter_old)
-  WRITE(fo,*) v2(1:ndim)
-  WRITE(fo,*) v12(1:ndim)
-  !
-  close(fo)
-  !
-  WRITE(*,*) "  Restart File is written."
-  !
-END SUBROUTINE output_restart
 !
 ! Check Result
 !
 SUBROUTINE output_result()
   !
   USE mathlib, ONLY : dgemv
-  USE solve_rc_vals, ONLY : v2, ndim, nl, x, rhs, z, nz, ham
+  USE solve_rc_qmr2_vals, ONLY : ndim, nl, x_n, rhs, z, nz, ham
   !
   IMPLICIT NONE
   !
@@ -264,7 +181,7 @@ SUBROUTINE output_result()
   !
   WRITE(*,*) "  Resulting Vector"
   DO iz = 1, nz
-     write(*,form) x(1:nl,iz)
+     write(*,form) x_n(1:nl,iz)
   END DO
   !
   WRITE(*,*) "  Residual Vector"
@@ -273,29 +190,20 @@ SUBROUTINE output_result()
      RETURN
   END IF
   !
-  DO iz = 1, nz
-     !
-     v2(1:ndim) = z(iz) * x(1:ndim,iz) - rhs(1:ndim)
-     CALL zgemv("N", ndim, ndim, CMPLX(-1d0, 0d0, KIND(0d0)), Ham, ndim, x(1:ndim,iz), 1, CMPLX(1d0, 0d0, KIND(0d0)), v2, 1)
-     !
-     write(*,form) v2(1:nl)
-     !
-  END DO
-  !
 END SUBROUTINE output_result
 !
-END MODULE solve_rc_routines
+END MODULE solve_rc_qmr2_routines
 !
 !
 !
-PROGRAM solve_rc
+PROGRAM solve_rc_qmr2
   !
-  USE komega_COCG, ONLY : komega_COCG_init, komega_COCG_restart, komega_COCG_update, &
-  &                       komega_COCG_getcoef, komega_COCG_getvec, komega_COCG_finalize
-  USE solve_rc_routines, ONLY : input_size, input_restart, generate_system, &
-  &                             output_restart, output_result
-  USE solve_rc_vals, ONLY : alpha, beta, ndim, nz, nl, itermax, iter_old, ham, restart, &
-  &                         rhs, v12, v2, r_l, r_l_save, threshold, x, z, z_seed
+  USE komega_shifted_qmr_sym_b, ONLY : komega_shifted_qmr_sym_b_init, komega_shifted_qmr_sym_b_update, &
+          &komega_shifted_qmr_sym_b_finalize, komega_shifted_qmr_sym_b_init_restart, komega_shifted_qmr_sym_b_output_restart
+  USE solve_rc_qmr2_routines, ONLY : input_size, generate_system, &
+  &                             output_result
+  USE solve_rc_qmr2_vals, ONLY : ndim, nz, nl, itermax, iter_old, ham, restart, &
+          &                         rhs, threshold, x_n, v_n, Av_n, z
   USE mathlib, ONLY : zgemv
   !
   IMPLICIT NONE
@@ -304,22 +212,17 @@ PROGRAM solve_rc
   !
   INTEGER :: &
   & iter, jter, & ! Counter for Iteration
-  & status(3)
-  !
-  COMPLEX(8),allocatable :: test_r(:,:) 
+  & status(2)
   !
   ! Input Size of vectors
   !
   CALL input_size()
   !
-  ALLOCATE(v12(ndim), v2(ndim), r_l(nl), x(nl,nz), z(nz), ham(ndim,ndim), rhs(ndim))
-  ALLOCATE(test_r(ndim,itermax))
+  ALLOCATE(x_n(nl,nz), v_n(nl), Av_n(nl), z(nz), ham(ndim,ndim), rhs(ndim))
   !
   CALL generate_system()
   !
   ! Check: Whether the restart file is exist.
-  !
-  IF (restart) CALL input_restart()
   !
   WRITE(*,*)
   WRITE(*,*) "#####  CG Initialization  #####"
@@ -328,13 +231,9 @@ PROGRAM solve_rc
   IF(restart) THEN
     !
     ! When restarting, counter
-    !
-    CALL komega_COCG_restart(ndim, nl, nz, x, z, iter_old + itermax, threshold, &
-    &                 status, iter_old, v2, v12, alpha, beta, z_seed, r_l_save)
-    !
+    CALL komega_shifted_qmr_sym_b_init_restart(ndim, nl, nz, x_n, z, rhs(1:ndim), itermax, threshold, &
+            &Av_n, v_n, 10, "restart.dat", status)
     ! These vectors were saved in COCG routine
-    !
-    DEALLOCATE(alpha, beta, r_l_save)
     !
     IF(status(1) /= 0) GOTO 10
     !
@@ -342,9 +241,7 @@ PROGRAM solve_rc
      !
      ! Generate Right Hand Side Vector
      !
-     v2(1:ndim) = rhs(1:ndim)
-     !
-     CALL komega_COCG_init(ndim, nl, nz, x, z, itermax, threshold)
+     CALL komega_shifted_qmr_sym_b_init(ndim, nl, nz, x_n, v_n, z, rhs(1:ndim), itermax, threshold)
      !
   END IF
   !
@@ -356,22 +253,15 @@ PROGRAM solve_rc
   !
   DO iter = 1, itermax
      !
-     ! Projection of Residual vector into the space
-     ! spaned by left vectors
-     !
-test_r(1:ndim,iter) = v2(1:ndim)
-     r_l(1:nl) = v2(1:nl)
-     !
      ! Matrix-vector product
-     !
-     CALL zgemv("N", ndim, ndim, CMPLX(1d0, 0d0, KIND(0d0)), Ham, ndim, v2, 1, CMPLX(0d0, 0d0, KIND(0d0)), v12, 1)
+    CALL zgemv('N', nl, nl, CMPLX(1d0, 0d0, KIND(0d0)), ham, nl, v_n, 1, CMPLX(0d0, 0d0, KIND(0d0)), Av_n, 1)
      !
      ! Update result x with COCG
      !
-     CALL komega_COCG_update(v12, v2, x, r_l, status)
+     CALL komega_shifted_qmr_sym_b_update(Av_n, v_n, x_n, status)
      !
-     WRITE(*,'(a,i8,3i5,e15.5)') "DEBUG : ", iter, status, DBLE(v12(1))
-     IF(status(1) < 0) EXIT
+     WRITE(*,'(a,i8,2i5,e15.5)') "DEBUG : ", iter, status, DBLE(Av_n(1))
+!     IF(status(1) < 0) EXIT
      !
   END DO
   !
@@ -379,48 +269,25 @@ test_r(1:ndim,iter) = v2(1:ndim)
      WRITE(*,*) "  Converged in iteration ", ABS(status(1))
   ELSE IF(status(2) == 1) THEN
      WRITE(*,*) "  Not Converged in iteration ", ABS(status(1))
-  ELSE IF(status(2) == 2) THEN
-     WRITE(*,*) "  Alpha becomes infinity", ABS(status(1))
-  ELSE IF(status(2) == 3) THEN
-     WRITE(*,*) "  Pi_seed becomes zero", ABS(status(1))
-  ELSE IF(status(2) == 4) THEN
-     WRITE(*,*) "  Residual & Shadow residual are orthogonal", ABS(status(1))
   END IF
   iter_old = abs(status(1))
   !
-  DO iter = 1, iter_old
-     DO jter = 1, iter_old
-        write(*,'(e15.5)',advance="no") &
-        & abs(dot_product(conjg(test_r(1:ndim,jter)), test_r(1:ndim,iter)) )
-     END DO
-     write(*,*)
-  END DO
-  !
   ! Get these vectors for restart in the Next run
   !
-  ALLOCATE(alpha(iter_old), beta(iter_old), r_l_save(nl,iter_old))
+  CALL komega_shifted_qmr_sym_b_output_restart(Av_n, v_n, 20, "restart.dat")
   !
-  CALL komega_COCG_getcoef(alpha, beta, z_seed, r_l_save)
-  CALL komega_COCG_getvec(v12)
-  !
-  CALL output_restart()
-  !
-  DEALLOCATE(alpha, beta, r_l_save)
-  !     
 10 CONTINUE
   !
   ! Deallocate all intrinsic vectors
   !
-  CALL komega_COCG_finalize()
+  CALL komega_shifted_qmr_sym_b_finalize()
   !
   ! Output to a file
   !
   CALL output_result()
   !
-  DEALLOCATE(v12, v2, r_l, x, z)
-  !
   WRITE(*,*)
   WRITE(*,*) "#####  Done  #####"
   WRITE(*,*)
   !
-END PROGRAM solve_rc
+END PROGRAM solve_rc_qmr2

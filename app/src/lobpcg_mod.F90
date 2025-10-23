@@ -121,6 +121,8 @@ SUBROUTINE lobpcg(itarget,x,hx,x_r,x_i,eig)
   INTEGER :: lwork = 5, info, iter, ii, jj, jtarget
   REAL(8) :: dnorm, rwork(7), eig3(3)
   COMPLEX(8) :: hsub(3,3), ovrp(3,3), work(5)
+  double precision :: t11, t12
+  logical :: lcollect=.FALSE.
   !
   ! Initial guess of re
   !
@@ -129,7 +131,7 @@ SUBROUTINE lobpcg(itarget,x,hx,x_r,x_i,eig)
   x(1:ndim,2) = CMPLX(x_r(1:ndim), x_i(1:ndim), KIND(0d0))
   dnorm = SQRT(DBLE(zdotcMPI(ndim, x(1:ndim,2), x(1:ndim,2))))
   x(1:ndim,2) = x(1:ndim,2) / dnorm
-  CALL ham_prod(x(1:ndim,2), hx(1:ndim,2))
+  CALL ham_prod(x(1:ndim,2), hx(1:ndim,2),t11,t12,lcollect)
   x( 1:ndim,3) = CMPLX(0d0, 0d0, KIND(0d0))
   hx(1:ndim,3) = CMPLX(0d0, 0d0, KIND(0d0))
   eig = DBLE(zdotcMPI(ndim, x(1:ndim,2), hx(1:ndim,2)))
@@ -148,7 +150,7 @@ SUBROUTINE lobpcg(itarget,x,hx,x_r,x_i,eig)
         x(1:ndim, 1) = x(1:ndim, 1) / dnorm
      END IF
      !
-     CALL ham_prod(x(1:ndim,1), hx(1:ndim, 1))
+     CALL ham_prod(x(1:ndim,1), hx(1:ndim, 1), t11, t12, lcollect)
      !
      DO ii = 1, 3
         DO jj = 1, 3
