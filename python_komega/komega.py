@@ -104,7 +104,7 @@ class KomegaSolver:
 
         if self.solver is None:
             raise RuntimeError("Solver not initialized")
-        
+
         if self.solver_type == "bicg":
             self.solver.update(*args, **kwargs)
         elif self.solver_type in ["cg_r", "cg_c", "cocg"]:
@@ -125,7 +125,7 @@ class KomegaSolver:
         """
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
-        
+
         if self.solver is None:
             raise RuntimeError("Solver not initialized")
 
@@ -142,7 +142,7 @@ class KomegaSolver:
         """
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
-        
+
         if self.solver is None:
             raise RuntimeError("Solver not initialized")
 
@@ -159,7 +159,7 @@ class KomegaSolver:
         """
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
-        
+
         if self.solver is None:
             raise RuntimeError("Solver not initialized")
 
