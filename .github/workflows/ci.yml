@@ -73,21 +73,85 @@ jobs:
 
     - name: Test sample application
       run: |
+        # Find ShiftK.out executable (check for libtool wrapper or actual executable)
+        if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            # It's a libtool wrapper script, use the actual executable
+            if [ -f "app/src/.libs/ShiftK.out" ] && [ -x "app/src/.libs/ShiftK.out" ]; then
+              SHIFTK_PATH="app/src/.libs/ShiftK.out"
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+              exit 1
+            fi
+          else
+            SHIFTK_PATH="app/src/ShiftK.out"
+          fi
+        else
+          echo "ERROR: ShiftK.out not found in app/src/"
+          exit 1
+        fi
+        
+        echo "Using ShiftK: $SHIFTK_PATH"
         cd app/sample/denovo
-        $PWD/../../install/bin/ShiftK.out namelist.def
-        # Check if output files are generated
-        test -f dynamicalG.dat
-        test -f ResVec.dat0
-        test -f TriDiagComp.dat
+        # Use absolute path to avoid path issues
+        ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
+        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        
+        if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
+          "$ABSOLUTE_SHIFTK_PATH" namelist.def
+          # Check if output files are generated
+          test -f dynamicalG.dat
+          test -f ResVec.dat0
+          test -f TriDiagComp.dat
+        else
+          echo "ERROR: ShiftK executable not accessible at: $ABSOLUTE_SHIFTK_PATH"
+          echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          exit 1
+        fi
 
     - name: Test sample application (from_file)
       run: |
+        # Find ShiftK.out executable (check for libtool wrapper or actual executable)
+        if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            # It's a libtool wrapper script, use the actual executable
+            if [ -f "app/src/.libs/ShiftK.out" ] && [ -x "app/src/.libs/ShiftK.out" ]; then
+              SHIFTK_PATH="app/src/.libs/ShiftK.out"
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+              exit 1
+            fi
+          else
+            SHIFTK_PATH="app/src/ShiftK.out"
+          fi
+        else
+          echo "ERROR: ShiftK.out not found in app/src/"
+          exit 1
+        fi
+        
+        echo "Using ShiftK: $SHIFTK_PATH"
         cd app/sample/from_file
-        $PWD/../../install/bin/ShiftK.out namelist.def
-        # Check if output files are generated
-        test -f dynamicalG.dat
-        test -f ResVec.dat0
-        test -f TriDiagComp.dat
+        # Use absolute path to avoid path issues
+        ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
+        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        
+        if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
+          "$ABSOLUTE_SHIFTK_PATH" namelist.def
+          # Check if output files are generated
+          test -f dynamicalG.dat
+          test -f ResVec.dat0
+          test -f TriDiagComp.dat
+        else
+          echo "ERROR: ShiftK executable not accessible at: $ABSOLUTE_SHIFTK_PATH"
+          echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          exit 1
+        fi
 
     - name: Collect test artifacts
       if: always()
