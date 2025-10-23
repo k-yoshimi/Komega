@@ -128,11 +128,11 @@ class KomegaCGC:
 
             # Update π values
             self.vals_r.pi_old[iz] = self.vals_r.pi[iz]
-            self.vals_r.pi[iz] = pi_new
+            self.vals_r.pi[iz] = np.real(pi_new)
 
             # Save for restart if needed
             if self.params.itermax > 0:
-                self.vals_r.pi_save[iz, self.params.iter] = pi_new
+                self.vals_r.pi_save[iz, self.params.iter] = np.real(pi_new)
 
     def seed_switch(self, v2: np.ndarray, status: List[int]) -> None:
         """

@@ -218,7 +218,7 @@ class KomegaCGR:
 
         # Update ρ and β
         rho_old = self.vals_r.rho
-        self.vals_r.rho = ddotMPI(self.params.ndim, v2, v2)
+        self.vals_r.rho = ddotMPI(v2, v2)
 
         if self.params.iter == 1:
             self.vals_r.beta = 0.0
@@ -231,7 +231,7 @@ class KomegaCGR:
         # Update α
         self.vals_r.alpha_old = self.vals_r.alpha
         alpha_denom = (
-            ddotMPI(self.params.ndim, v2, v12)
+            ddotMPI(v2, v12)
             - self.vals_r.beta * self.vals_r.rho / self.vals_r.alpha
         )
 
@@ -265,7 +265,7 @@ class KomegaCGR:
         self.seed_switch(v2, status)
 
         # Check convergence
-        v12[0] = np.sqrt(ddotMPI(self.params.ndim, v2, v2))
+        v12[0] = np.sqrt(ddotMPI(v2, v2))
         self.params.resnorm = v12[0]
 
         # Update convergence flags
