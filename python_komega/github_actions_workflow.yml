@@ -1,0 +1,139 @@
+name: Python Library Tests
+
+on:
+  push:
+    branches: [ python, master, develop ]
+  pull_request:
+    branches: [ python, master, develop ]
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', '3.11', '3.12']
+        test-type: ['basic', 'solvers', 'math', 'storage', 'compatibility']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy scipy pytest
+    
+    - name: Run comprehensive test suite
+      run: |
+        cd python_komega
+        python test_github_actions.py --test-type ${{ matrix.test-type }} --verbose
+    
+    - name: Run all tests (final verification)
+      if: matrix.test-type == 'compatibility'
+      run: |
+        cd python_komega
+        python test_github_actions.py --test-type all --verbose
+    
+    - name: Generate test report
+      run: |
+        cd python_komega
+        echo "# Python Library Test Report" > test_report.md
+        echo "" >> test_report.md
+        echo "## Test Summary" >> test_report.md
+        echo "- Python version: ${{ matrix.python-version }}" >> test_report.md
+        echo "- Test type: ${{ matrix.test-type }}" >> test_report.md
+        echo "- Operating system: ${{ runner.os }}" >> test_report.md
+        echo "- Test date: $(date)" >> test_report.md
+        echo "" >> test_report.md
+        echo "## Test Results" >> test_report.md
+        echo "Tests completed successfully!" >> test_report.md
+    
+    - name: Upload test report
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-test-report-${{ matrix.python-version }}-${{ matrix.test-type }}
+        path: python_komega/test_report.md
+
+  python-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy scipy flake8 black isort mypy
+    
+    - name: Run flake8
+      run: |
+        cd python_komega
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Run black (check only)
+      run: |
+        cd python_komega
+        black --check --diff .
+    
+    - name: Run isort (check only)
+      run: |
+        cd python_komega
+        isort --check-only --diff .
+    
+    - name: Run mypy
+      run: |
+        cd python_komega
+        mypy . --ignore-missing-imports
+
+  python-documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install documentation tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy scipy sphinx sphinx-rtd-theme
+    
+    - name: Generate documentation
+      run: |
+        cd python_komega
+        # Create basic documentation structure
+        mkdir -p docs
+        echo "# Komega Python Library Documentation" > docs/README.md
+        echo "" >> docs/README.md
+        echo "This is the documentation for the Komega Python library." >> docs/README.md
+        echo "" >> docs/README.md
+        echo "## Installation" >> docs/README.md
+        echo "See the main README.md for installation instructions." >> docs/README.md
+        echo "" >> docs/README.md
+        echo "## API Reference" >> docs/README.md
+        echo "The library provides the following main components:" >> docs/README.md
+        echo "" >> docs/README.md
+        python -c "
+        from komega import get_available_solvers, get_solver_info
+        solvers = get_available_solvers()
+        for solver in solvers:
+            info = get_solver_info(solver)
+            print(f'- **{solver}**: {info[\"name\"]} - {info[\"description\"]}')
+        " >> docs/README.md
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-documentation
+        path: python_komega/docs/
