@@ -14,17 +14,20 @@ jobs:
   test-matrix:
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 2
+      max-parallel: 3
       matrix:
         include:
           - os: ubuntu-20.04
-            fortran-compiler: gfortran
+            fortran-compiler: gfortran-9
             blas-variant: reference
+          - os: ubuntu-20.04
+            fortran-compiler: gfortran-10
+            blas-variant: openblas
           - os: ubuntu-22.04
-            fortran-compiler: gfortran
+            fortran-compiler: gfortran-11
             blas-variant: openblas
           - os: ubuntu-latest
-            fortran-compiler: gfortran
+            fortran-compiler: gfortran-12
             blas-variant: openblas
 
     steps:
@@ -34,7 +37,32 @@ jobs:
       if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran autotools-dev automake autoconf libtool pkg-config make
+        sudo apt-get install -y autotools-dev automake autoconf libtool pkg-config make
+        
+        # Install specific gfortran version
+        case "${{ matrix.fortran-compiler }}" in
+          gfortran-9)
+            sudo apt-get install -y gfortran-9
+            sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 90
+            ;;
+          gfortran-10)
+            sudo apt-get install -y gfortran-10
+            sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-10 100
+            ;;
+          gfortran-11)
+            sudo apt-get install -y gfortran-11
+            sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-11 110
+            ;;
+          gfortran-12)
+            sudo apt-get install -y gfortran-12
+            sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-12 120
+            ;;
+        esac
+        
+        # Verify gfortran version
+        gfortran --version
+        
+        # Install BLAS/LAPACK
         if [ "${{ matrix.blas-variant }}" = "reference" ]; then
           sudo apt-get install -y libblas-dev liblapack-dev
         else
@@ -311,10 +339,14 @@ jobs:
         find . -name "restart.dat" -exec cp {} results/ \; 2>/dev/null || echo "No restart files found"
         
         # Create summary
-        echo "# Test Results for ${{ matrix.os }} with ${{ matrix.blas-variant }}" > results/summary.md
+        echo "# Test Results for ${{ matrix.os }} with ${{ matrix.fortran-compiler }} and ${{ matrix.blas-variant }}" > results/summary.md
         echo "Generated: $(date)" >> results/summary.md
         echo "OS: ${{ matrix.os }}" >> results/summary.md
+        echo "Fortran Compiler: ${{ matrix.fortran-compiler }}" >> results/summary.md
         echo "BLAS: ${{ matrix.blas-variant }}" >> results/summary.md
+        echo "" >> results/summary.md
+        echo "## Compiler Information" >> results/summary.md
+        gfortran --version >> results/summary.md
         echo "" >> results/summary.md
         echo "## Files Generated" >> results/summary.md
         if [ -d "results" ] && [ "$(ls -A results/ 2>/dev/null)" ]; then
@@ -327,6 +359,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-${{ matrix.os }}-${{ matrix.blas-variant }}
+        name: test-results-${{ matrix.os }}-${{ matrix.fortran-compiler }}-${{ matrix.blas-variant }}
         path: results/
         retention-days: 7
