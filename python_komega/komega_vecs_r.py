@@ -10,7 +10,7 @@ Python port created for verification and testing purposes.
 
 import numpy as np
 from typing import Optional
-from .komega_parameter import get_global_params
+from komega_parameter import get_global_params
 
 
 class KomegaVecsR:

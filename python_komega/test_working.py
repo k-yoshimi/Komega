@@ -158,7 +158,7 @@ def test_vecs_r_module():
         vecs_r.initialize(10, 5, 3, 100)
         print(f"  ✓ Real vectors initialized successfully")
         print(f"    v3 shape: {vecs_r.get_v3().shape}")
-        print(f"    p shape: {vecs_r.get_p().shape}")
+        print(f"    p shape: {vecs_r.get_p(0).shape}")
         
     except Exception as e:
         print(f"  ✗ Real vectors module test failed: {e}")
