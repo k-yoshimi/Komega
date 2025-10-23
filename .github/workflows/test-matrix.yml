@@ -230,25 +230,31 @@ jobs:
         echo "SHIFTK_PATH file exists: $([ -f "$SHIFTK_PATH" ] && echo "YES" || echo "NO")"
         echo "SHIFTK_PATH is executable: $([ -x "$SHIFTK_PATH" ] && echo "YES" || echo "NO")"
         
-        # Test denovo sample
-        echo "=== Testing denovo sample with built ShiftK.out ==="
-        cd app/sample/denovo
-        echo "Current directory: $(pwd)"
-        echo "Using ShiftK: $SHIFTK_PATH"
-        echo "SHIFTK_PATH variable: $SHIFTK_PATH"
+        # Get absolute path BEFORE changing directory to avoid relative path issues
+        ABSOLUTE_SHIFTK_PATH=$(realpath "$SHIFTK_PATH" 2>/dev/null || echo "$PWD/$SHIFTK_PATH")
+        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
         
-        # Debug: Check if SHIFTK_PATH is set correctly
-        if [ -z "$SHIFTK_PATH" ]; then
-          echo "ERROR: SHIFTK_PATH is not set!"
+        # Early validation of ShiftK.out file
+        if [ ! -f "$ABSOLUTE_SHIFTK_PATH" ]; then
+          echo "ERROR: ShiftK.out file not found at: $ABSOLUTE_SHIFTK_PATH"
           echo "This means the ShiftK.out detection failed in the previous step"
           exit 1
         fi
         
-        # Use absolute path to the built executable
-        ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
-        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
-        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
-        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        if [ ! -x "$ABSOLUTE_SHIFTK_PATH" ]; then
+          echo "ERROR: ShiftK.out file is not executable at: $ABSOLUTE_SHIFTK_PATH"
+          echo "File permissions:"
+          ls -la "$ABSOLUTE_SHIFTK_PATH" || echo "ls command failed"
+          exit 1
+        fi
+        
+        # Test denovo sample
+        echo "=== Testing denovo sample with built ShiftK.out ==="
+        cd app/sample/denovo
+        echo "Current directory: $(pwd)"
+        echo "Using ShiftK: $ABSOLUTE_SHIFTK_PATH"
         
         # Debug: Show what files are actually available
         echo "=== Debug: Available ShiftK files ==="
@@ -257,8 +263,8 @@ jobs:
         ls -la $PWD/../../app/src/ 2>/dev/null || echo "app/src directory not found"
         
         if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
-          echo "Executing: $ABSOLUTE_SHIFTK_PATH namelist.def"
-          $ABSOLUTE_SHIFTK_PATH namelist.def
+          echo "Executing ShiftK.out with proper arguments..."
+          $ABSOLUTE_SHIFTK_PATH namelist.def lBiCG
           if [ -f "dynamicalG.dat" ]; then
             echo "SUCCESS: dynamicalG.dat created"
             ls -la dynamicalG.dat

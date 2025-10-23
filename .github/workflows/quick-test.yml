@@ -143,7 +143,8 @@ jobs:
         echo "Current directory: $(pwd)"
         
         if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
-          timeout 30s "$ABSOLUTE_SHIFTK_PATH" namelist.def || echo "Sample test completed"
+          echo "Executing ShiftK.out with proper arguments..."
+          timeout 30s "$ABSOLUTE_SHIFTK_PATH" namelist.def lBiCG || echo "Sample test completed"
           test -f dynamicalG.dat && echo "✓ Sample application test passed"
         else
           echo "ERROR: ShiftK executable not accessible at: $ABSOLUTE_SHIFTK_PATH"
