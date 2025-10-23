@@ -304,7 +304,7 @@ class DetailedTestSystem:
         print("  Residual Vector")
         final_residuals = []
         for iz in range(self.nz):
-            residual = self.compute_residual(x[:, iz], z[iz])
+            residual = self.compute_residual(x[:, iz], complex(z[iz]))
             final_residuals.append(residual)
             for i in range(self.nl):
                 if self.data_type == complex:

@@ -12,7 +12,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from .komega_parameter import get_global_params
+from komega_parameter import get_global_params
 
 
 class KomegaValsC:
@@ -61,7 +61,7 @@ class KomegaValsC:
         self.pi_old = np.ones(self.nz, dtype=complex)
 
         # Initialize scalar values
-        self.z_seed = z[0]
+        self.z_seed = complex(z[0])
         self.rho = 1.0 + 0.0j
         self.alpha = 1.0 + 0.0j
         self.alpha_old = 1.0 + 0.0j
@@ -173,7 +173,7 @@ class KomegaValsC:
             Index of the seed frequency
         """
         if self.z is not None and 0 <= iz < len(self.z):
-            self.z_seed = self.z[iz]
+            self.z_seed = complex(self.z[iz])
 
     def scale_pi_values(self, scale_factor: complex) -> None:
         """

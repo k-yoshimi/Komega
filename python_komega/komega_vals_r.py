@@ -61,7 +61,7 @@ class KomegaValsR:
         self.pi_old = np.ones(self.nz, dtype=float)
 
         # Initialize scalar values
-        self.z_seed = z[0]
+        self.z_seed = float(z[0])
         self.rho = 1.0
         self.alpha = 1.0
         self.alpha_old = 1.0
@@ -173,7 +173,7 @@ class KomegaValsR:
             Index of the seed frequency
         """
         if self.z is not None and 0 <= iz < len(self.z):
-            self.z_seed = self.z[iz]
+            self.z_seed = float(self.z[iz])
 
     def scale_pi_values(self, scale_factor: float) -> None:
         """

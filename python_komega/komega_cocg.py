@@ -12,10 +12,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from .komega_math import get_global_math, zaxpy, zcopy, zdotcMPI, zdotuMPI, zscal
-from .komega_parameter import get_global_params, initialize_global_params
-from .komega_vals_c import cleanup_vals_c, get_global_vals_c, initialize_vals_c
-from .komega_vecs_c import cleanup_vecs_c, get_global_vecs_c, initialize_vecs_c
+from komega_math import get_global_math, zaxpy, zcopy, zdotcMPI, zdotuMPI, zscal
+from komega_parameter import get_global_params, initialize_global_params
+from komega_vals_c import cleanup_vals_c, get_global_vals_c, initialize_vals_c
+from komega_vecs_c import cleanup_vecs_c, get_global_vecs_c, initialize_vecs_c
 
 
 class KomegaCOCG:

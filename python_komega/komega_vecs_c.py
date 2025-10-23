@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 
-from .komega_parameter import get_global_params
+from komega_parameter import get_global_params
 
 
 class KomegaVecsC:

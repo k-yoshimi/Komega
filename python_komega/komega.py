@@ -12,10 +12,10 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
-from .komega_bicg import get_global_bicg
-from .komega_cg_c import get_global_cg_c
-from .komega_cg_r import get_global_cg_r
-from .komega_cocg import get_global_cocg
+from komega_bicg import get_global_bicg
+from komega_cg_c import get_global_cg_c
+from komega_cg_r import get_global_cg_r
+from komega_cocg import get_global_cocg
 
 
 class KomegaSolver:

@@ -255,7 +255,7 @@ class KomegaMath:
         float
             Maximum absolute value
         """
-        result = np.max(np.abs(array))
+        result: float = np.max(np.abs(array))
 
         # In MPI version, this would perform MPI_Allreduce with MPI_MAX
         if self.params.lmpi:
