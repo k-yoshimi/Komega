@@ -4,6 +4,17 @@
 
 <img src="doc/figs/komega.png" width="300">
 
+## プロジェクト情報
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![Language: Fortran](https://img.shields.io/badge/Language-Fortran-orange.svg)](https://fortran-lang.org/)
+[![Platform: Linux, macOS](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/k-yoshimi/Komega)
+[![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-green.svg)](https://github.com/k-yoshimi/Komega/releases)
+
+## ビルドステータス
+[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+
 # What is Kω ? 
 
 Shifted-Krylov部分空間法に基づくソルバーライブラリと,
@@ -13,14 +24,14 @@ Shifted-Krylov部分空間法に基づくソルバーライブラリと,
 
  * 最新版のパッケージはこちらから.
  
-   https://github.com/issp-center-dev/Komega/releases/download/v2.0.0/komega-2.0.0.tar.gz
+   https://github.com/k-yoshimi/Komega/releases/download/v2.0.0/komega-2.0.0.tar.gz
 
  * リリースノート
  
-   https://github.com/issp-center-dev/Komega/releases/tag/v2.0.0
+   https://github.com/k-yoshimi/Komega/releases/tag/v2.0.0
  * 過去のリリース
  
-   https://github.com/issp-center-dev/Komega/releases
+   https://github.com/k-yoshimi/Komega/releases
 
 # Prerequisite
 

@@ -4,16 +4,16 @@
 
 <img src="doc/figs/komega.png" width="300">
 
-## Build Status
-[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
-[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
-[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
-
 ## Project Information
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Language: Fortran](https://img.shields.io/badge/Language-Fortran-orange.svg)](https://fortran-lang.org/)
 [![Platform: Linux, macOS](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/k-yoshimi/Komega)
 [![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-green.svg)](https://github.com/k-yoshimi/Komega/releases)
+
+## Build Status
+[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
 
 # What is Kω? 
 
