@@ -8,10 +8,11 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
-import numpy as np
-import sys
 import os
-from typing import Tuple, List, Optional, Dict, Any
+import sys
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

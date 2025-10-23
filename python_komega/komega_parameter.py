@@ -8,8 +8,9 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
+from typing import List, Optional
+
 import numpy as np
-from typing import Optional, List
 
 
 class KomegaParameter:

@@ -8,24 +8,26 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from komega_bicg import KomegaBiCG, get_global_bicg
+from komega_cg_c import KomegaCGC, get_global_cg_c
+from komega_cg_r import KomegaCGR, get_global_cg_r
+from komega_cocg import KomegaCOCG, get_global_cocg
+from komega_math import KomegaMath, get_global_math
+
 # Import modules directly to avoid relative import issues
 from komega_parameter import KomegaParameter, get_global_params
-from komega_math import KomegaMath, get_global_math
-from komega_vals_r import KomegaValsR, get_global_vals_r
 from komega_vals_c import KomegaValsC, get_global_vals_c
-from komega_vecs_r import KomegaVecsR, get_global_vecs_r
+from komega_vals_r import KomegaValsR, get_global_vals_r
 from komega_vecs_c import KomegaVecsC, get_global_vecs_c
-from komega_bicg import KomegaBiCG, get_global_bicg
-from komega_cg_r import KomegaCGR, get_global_cg_r
-from komega_cg_c import KomegaCGC, get_global_cg_c
-from komega_cocg import KomegaCOCG, get_global_cocg
+from komega_vecs_r import KomegaVecsR, get_global_vecs_r
 
 
 def test_solver_creation():

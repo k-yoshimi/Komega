@@ -5,9 +5,10 @@ Simplified test suite for verifying corrected function calls.
 This test avoids relative import issues by testing the functions directly.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the current directory to the path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

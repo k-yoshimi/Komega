@@ -8,14 +8,15 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from komega import create_solver, get_available_solvers, get_solver_info, KomegaSolver
+from komega import KomegaSolver, create_solver, get_available_solvers, get_solver_info
 
 
 def test_solver_creation():
@@ -148,7 +149,7 @@ def test_value_storage():
     """Test value storage modules."""
     print("Testing value storage modules...")
 
-    from komega import get_global_vals_r, get_global_vals_c
+    from komega import get_global_vals_c, get_global_vals_r
 
     # Test real values
     try:

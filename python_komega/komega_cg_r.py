@@ -8,12 +8,14 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
+from typing import List, Optional, Tuple
+
 import numpy as np
-from typing import Tuple, Optional, List
+
+from .komega_math import dabsmax, daxpy, dcopy, ddotMPI, dscal, get_global_math
 from .komega_parameter import get_global_params, initialize_global_params
-from .komega_math import get_global_math, ddotMPI, daxpy, dcopy, dscal, dabsmax
-from .komega_vals_r import get_global_vals_r, initialize_vals_r, cleanup_vals_r
-from .komega_vecs_r import get_global_vecs_r, initialize_vecs_r, cleanup_vecs_r
+from .komega_vals_r import cleanup_vals_r, get_global_vals_r, initialize_vals_r
+from .komega_vecs_r import cleanup_vecs_r, get_global_vecs_r, initialize_vecs_r
 
 
 class KomegaCGR:

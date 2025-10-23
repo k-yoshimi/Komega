@@ -4,9 +4,10 @@ Basic test for Komega Python library
 This script tests the basic functionality without complex imports.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the current directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

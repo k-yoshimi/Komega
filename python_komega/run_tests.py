@@ -18,9 +18,9 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
-import sys
-import os
 import argparse
+import os
+import sys
 from typing import List, Optional
 
 # Add the current directory to the Python path

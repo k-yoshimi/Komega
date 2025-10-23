@@ -9,9 +9,10 @@ The functions should be called with 2 arguments (x, y) instead of 3 arguments
 (ndim, x, y) as they were incorrectly called before.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the current directory to the path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -88,10 +89,10 @@ def test_solver_function_calls():
     print("=" * 70)
 
     try:
-        from komega_parameter import get_global_params
         from komega_math import KomegaMath
-        from komega_vals_r import KomegaValsR
+        from komega_parameter import get_global_params
         from komega_vals_c import KomegaValsC
+        from komega_vals_r import KomegaValsR
 
         # Initialize parameters
         params = get_global_params()

@@ -8,8 +8,10 @@ Copyright (C) 2016 Mitsuaki Kawamura
 Python port created for verification and testing purposes.
 """
 
-import numpy as np
 from typing import Optional
+
+import numpy as np
+
 from .komega_parameter import get_global_params
 
 
