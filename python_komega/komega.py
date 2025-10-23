@@ -17,10 +17,10 @@ from komega_cg_c import get_global_cg_c
 from komega_cg_r import get_global_cg_r
 from komega_cocg import get_global_cocg
 from komega_math import get_global_math
-from komega_vals_r import get_global_vals_r
 from komega_vals_c import get_global_vals_c
-from komega_vecs_r import get_global_vecs_r
+from komega_vals_r import get_global_vals_r
 from komega_vecs_c import get_global_vecs_c
+from komega_vecs_r import get_global_vecs_r
 
 
 class KomegaSolver:
