@@ -1,0 +1,52 @@
+# C Komega Library .gitignore
+
+# Build directories
+build/
+lib/
+docs/
+
+# Keep test source files and Makefiles
+!tests/
+!tests/*.c
+!tests/Makefile
+!tests/run_c_tests.sh
+
+# Object files
+*.o
+*.lo
+*.a
+*.so
+*.dylib
+
+# Executables (but keep test source files)
+build/test_*
+build/*_test
+
+# Debug symbols
+*.dSYM/
+*.dwarf
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Coverage files
+*.gcov
+*.gcno
+*.gcda
+
+# Profiling files
+*.prof
+gmon.out

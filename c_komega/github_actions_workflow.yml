@@ -1,0 +1,126 @@
+name: C Library Tests
+
+on:
+  push:
+    branches: [ c, master, develop ]
+  pull_request:
+    branches: [ c, master, develop ]
+
+jobs:
+  c-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        optimization: ['-O0', '-O2', '-O3']
+        test-type: ['basic', 'math', 'storage', 'compatibility']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up C compiler (${{ matrix.compiler }})
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc" ]; then
+          sudo apt-get update
+          sudo apt-get install -y gcc
+        elif [ "${{ matrix.compiler }}" = "clang" ]; then
+          sudo apt-get update
+          sudo apt-get install -y clang
+        fi
+    
+    - name: Build C library
+      run: |
+        cd c_komega
+        make clean
+        make CFLAGS="-Wall -Wextra -std=c99 ${{ matrix.optimization }} -g -fPIC"
+    
+    - name: Run C tests
+      run: |
+        cd c_komega
+        make run-test
+    
+    - name: Test library installation
+      run: |
+        cd c_komega
+        sudo make install
+        make clean
+        make test
+        sudo make uninstall
+    
+    - name: Generate test report
+      run: |
+        cd c_komega
+        echo "# C Library Test Report" > test_report.md
+        echo "" >> test_report.md
+        echo "## Test Summary" >> test_report.md
+        echo "- Compiler: ${{ matrix.compiler }}" >> test_report.md
+        echo "- Optimization: ${{ matrix.optimization }}" >> test_report.md
+        echo "- Test type: ${{ matrix.test-type }}" >> test_report.md
+        echo "- Operating system: ${{ runner.os }}" >> test_report.md
+        echo "- Test date: $(date)" >> test_report.md
+        echo "" >> test_report.md
+        echo "## Test Results" >> test_report.md
+        echo "Tests completed successfully!" >> test_report.md
+    
+    - name: Upload test report
+      uses: actions/upload-artifact@v4
+      with:
+        name: c-test-report-${{ matrix.compiler }}-${{ matrix.optimization }}-${{ matrix.test-type }}
+        path: c_komega/test_report.md
+
+  c-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install linting tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck clang-tidy
+    
+    - name: Run cppcheck
+      run: |
+        cd c_komega
+        cppcheck --enable=all --inconclusive --std=c99 src/ include/ tests/
+    
+    - name: Run clang-tidy
+      run: |
+        cd c_komega
+        clang-tidy src/*.c -- -Iinclude -std=c99
+
+  c-documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install documentation tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y doxygen graphviz
+    
+    - name: Generate documentation
+      run: |
+        cd c_komega
+        # Create basic documentation structure
+        mkdir -p docs
+        echo "# Komega C Library Documentation" > docs/README.md
+        echo "" >> docs/README.md
+        echo "This is the documentation for the Komega C library." >> docs/README.md
+        echo "" >> docs/README.md
+        echo "## Installation" >> docs/README.md
+        echo "See the main README.md for installation instructions." >> docs/README.md
+        echo "" >> docs/README.md
+        echo "## API Reference" >> docs/README.md
+        echo "The library provides the following main components:" >> docs/README.md
+        echo "" >> docs/README.md
+        echo "- **Parameter Module**: Global parameter management" >> docs/README.md
+        echo "- **Math Module**: Mathematical operations (BLAS-like)" >> docs/README.md
+        echo "- **Value Storage**: Real and complex value storage" >> docs/README.md
+        echo "- **Vector Storage**: Real and complex vector storage" >> docs/README.md
+        echo "- **Solvers**: BiCG, CG, COCG solvers" >> docs/README.md
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: c-documentation
+        path: c_komega/docs/
