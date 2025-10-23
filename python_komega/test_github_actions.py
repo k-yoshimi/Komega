@@ -29,12 +29,12 @@ try:
     from komega import (
         create_solver,
         get_available_solvers,
-        get_solver_info,
         get_global_math,
-        get_global_vals_r,
         get_global_vals_c,
-        get_global_vecs_r,
+        get_global_vals_r,
         get_global_vecs_c,
+        get_global_vecs_r,
+        get_solver_info,
     )
     from komega_parameter import get_global_params
 except ImportError as e:
