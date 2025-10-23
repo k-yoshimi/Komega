@@ -145,11 +145,16 @@ jobs:
           if "$ABSOLUTE_SHIFTK_PATH" namelist.def lBiCG; then
             echo "SUCCESS: ShiftK.out completed successfully"
             # Check if output files are generated
-            if [ -f "dynamicalG.dat" ]; then
-              echo "SUCCESS: dynamicalG.dat created"
+            if [ -f "output/dynamicalG.dat" ]; then
+              echo "SUCCESS: dynamicalG.dat created in output/"
+              ls -la output/dynamicalG.dat
+            elif [ -f "dynamicalG.dat" ]; then
+              echo "SUCCESS: dynamicalG.dat created in current directory"
               ls -la dynamicalG.dat
             else
-              echo "WARNING: dynamicalG.dat not found"
+              echo "WARNING: dynamicalG.dat not found in output/ or current directory"
+              echo "Checking output directory contents:"
+              ls -la output/ 2>/dev/null || echo "output/ directory not found"
             fi
             if [ -f "ResVec.dat0" ]; then
               echo "SUCCESS: ResVec.dat0 created"
@@ -185,7 +190,7 @@ jobs:
               echo "WARNING: TriDiagComp.dat not found"
             fi
             # If at least dynamicalG.dat exists, consider it a success
-            if [ -f "dynamicalG.dat" ]; then
+            if [ -f "output/dynamicalG.dat" ] || [ -f "dynamicalG.dat" ]; then
               echo "Sample test completed successfully (output file generated)"
             else
               echo "ERROR: No output files generated and ShiftK.out failed"
@@ -248,11 +253,16 @@ jobs:
           if "$ABSOLUTE_SHIFTK_PATH" namelist.def lBiCG; then
             echo "SUCCESS: ShiftK.out completed successfully"
             # Check if output files are generated
-            if [ -f "dynamicalG.dat" ]; then
-              echo "SUCCESS: dynamicalG.dat created"
+            if [ -f "output/dynamicalG.dat" ]; then
+              echo "SUCCESS: dynamicalG.dat created in output/"
+              ls -la output/dynamicalG.dat
+            elif [ -f "dynamicalG.dat" ]; then
+              echo "SUCCESS: dynamicalG.dat created in current directory"
               ls -la dynamicalG.dat
             else
-              echo "WARNING: dynamicalG.dat not found"
+              echo "WARNING: dynamicalG.dat not found in output/ or current directory"
+              echo "Checking output directory contents:"
+              ls -la output/ 2>/dev/null || echo "output/ directory not found"
             fi
             if [ -f "ResVec.dat0" ]; then
               echo "SUCCESS: ResVec.dat0 created"
@@ -288,7 +298,7 @@ jobs:
               echo "WARNING: TriDiagComp.dat not found"
             fi
             # If at least dynamicalG.dat exists, consider it a success
-            if [ -f "dynamicalG.dat" ]; then
+            if [ -f "output/dynamicalG.dat" ] || [ -f "dynamicalG.dat" ]; then
               echo "Sample test completed successfully (output file generated)"
             else
               echo "ERROR: No output files generated and ShiftK.out failed"
