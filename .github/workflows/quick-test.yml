@@ -22,8 +22,22 @@ jobs:
     - name: Configure and build
       run: |
         ./configure --prefix=$PWD/install
-        make -j$(nproc)
-        make install
+        
+        # Check if app/src directory exists before build
+        echo "=== Checking app/src directory before build ==="
+        ls -la app/ || echo "app/ directory not found"
+        ls -la app/src/ || echo "app/src/ directory not found"
+        
+        # Build with verbose output
+        echo "=== Building with verbose output ==="
+        make -j$(nproc) V=1 || {
+          echo "Parallel build failed, trying single-threaded build..."
+          make -j1 V=1 || {
+            echo "Single-threaded build also failed, trying clean build..."
+            make clean
+            make -j1 V=1
+          }
+        }
         
         # Check if ShiftK.out was built
         echo "=== Checking if ShiftK.out was built ==="
@@ -52,6 +66,8 @@ jobs:
           find . -name "ShiftK*" -type f || echo "No ShiftK executable found"
           echo "Build completed but ShiftK.out was not created"
         fi
+        
+        make install
 
     - name: Run quick tests
       run: |
@@ -79,21 +95,32 @@ jobs:
 
     - name: Test sample application
       run: |
-        # Find ShiftK.out executable (check for libtool wrapper or actual executable)
-        if [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
+        # Find ShiftK.out executable (check installed version first, then built version)
+        SHIFTK_PATH=""
+        
+        # First check if ShiftK.out was installed
+        if [ -f "install/bin/ShiftK.out" ] && [ -x "install/bin/ShiftK.out" ]; then
+          SHIFTK_PATH="install/bin/ShiftK.out"
+          echo "Found installed ShiftK.out at: $SHIFTK_PATH"
+        # Then check if ShiftK.out was built in app/src
+        elif [ -f "app/src/ShiftK.out" ] && [ -x "app/src/ShiftK.out" ]; then
           if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
             # It's a libtool wrapper script, use the actual executable
             if [ -f "app/src/.libs/ShiftK.out" ] && [ -x "app/src/.libs/ShiftK.out" ]; then
               SHIFTK_PATH="app/src/.libs/ShiftK.out"
+              echo "Found actual executable in .libs directory: $SHIFTK_PATH"
             else
               echo "ERROR: Actual executable not found in .libs directory"
               exit 1
             fi
           else
             SHIFTK_PATH="app/src/ShiftK.out"
+            echo "Found built ShiftK.out at: $SHIFTK_PATH"
           fi
         else
-          echo "ERROR: ShiftK.out not found in app/src/"
+          echo "ERROR: ShiftK.out not found in install/bin/ or app/src/"
+          echo "Checking available files..."
+          find . -name "ShiftK*" -type f || echo "No ShiftK executable found"
           exit 1
         fi
         
