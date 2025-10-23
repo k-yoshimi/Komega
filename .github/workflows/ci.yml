@@ -34,13 +34,38 @@ jobs:
       run: |
         ./configure --prefix=$PWD/install
 
-    - name: Build
+    - name: Build and Install
       run: |
         make -j$(nproc)
-
-    - name: Install
-      run: |
         make install
+        
+        # Check if ShiftK.out was built
+        echo "=== Checking if ShiftK.out was built ==="
+        if [ -f "app/src/ShiftK.out" ]; then
+          echo "SUCCESS: ShiftK.out found in app/src/"
+          ls -la app/src/ShiftK.out
+          file app/src/ShiftK.out
+          # Check if it's a libtool wrapper script
+          if head -1 app/src/ShiftK.out | grep -q "#!/bin/sh"; then
+            echo "ShiftK.out is a libtool wrapper script"
+            # Check for the actual executable in .libs directory
+            if [ -f "app/src/.libs/ShiftK.out" ]; then
+              echo "Actual executable found in app/src/.libs/ShiftK.out"
+              ls -la app/src/.libs/ShiftK.out
+              file app/src/.libs/ShiftK.out
+            else
+              echo "ERROR: Actual executable not found in .libs directory"
+            fi
+          fi
+        else
+          echo "ERROR: ShiftK.out not found in app/src/"
+          echo "Checking app directory structure..."
+          ls -la app/ || echo "app/ directory not found"
+          ls -la app/src/ || echo "app/src/ directory not found"
+          echo "Searching for any ShiftK executable..."
+          find . -name "ShiftK*" -type f || echo "No ShiftK executable found"
+          echo "Build completed but ShiftK.out was not created"
+        fi
 
     - name: Run library tests
       run: |
