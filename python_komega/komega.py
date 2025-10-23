@@ -41,7 +41,9 @@ class KomegaSolver:
             Type of solver to use ('bicg', 'cg_r', 'cg_c', 'cocg')
         """
         self.solver_type = solver_type.lower()
-        self.solver: Optional[Union[KomegaBiCG, KomegaCGR, KomegaCGC, KomegaCOCG]] = None
+        self.solver: Optional[Union[KomegaBiCG, KomegaCGR, KomegaCGC, KomegaCOCG]] = (
+            None
+        )
         self.initialized = False
 
         # Initialize the appropriate solver
