@@ -12,10 +12,10 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
-from komega_bicg import get_global_bicg
-from komega_cg_c import get_global_cg_c
-from komega_cg_r import get_global_cg_r
-from komega_cocg import get_global_cocg
+from komega_bicg import KomegaBiCG, get_global_bicg
+from komega_cg_c import KomegaCGC, get_global_cg_c
+from komega_cg_r import KomegaCGR, get_global_cg_r
+from komega_cocg import KomegaCOCG, get_global_cocg
 from komega_math import get_global_math
 from komega_vals_c import get_global_vals_c
 from komega_vals_r import get_global_vals_r
@@ -41,7 +41,7 @@ class KomegaSolver:
             Type of solver to use ('bicg', 'cg_r', 'cg_c', 'cocg')
         """
         self.solver_type = solver_type.lower()
-        self.solver = None
+        self.solver: Optional[Union[KomegaBiCG, KomegaCGR, KomegaCGC, KomegaCOCG]] = None
         self.initialized = False
 
         # Initialize the appropriate solver
