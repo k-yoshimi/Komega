@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
+        python-version: [3.9, '3.10', '3.11', '3.12']
     
     steps:
     - uses: actions/checkout@v4
@@ -275,7 +275,7 @@ jobs:
         echo "All tests passed successfully!" >> test_report.md
     
     - name: Upload test report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-test-report-${{ matrix.python-version }}
         path: python_komega/test_report.md
@@ -355,7 +355,7 @@ jobs:
         " >> docs/README.md
     
     - name: Upload documentation
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-documentation
         path: python_komega/docs/
