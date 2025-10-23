@@ -205,6 +205,6 @@ This project uses GitHub Actions for automated testing across multiple environme
  * **BLAS Libraries**: Both reference BLAS and OpenBLAS
 
 ## Build Status
-[![CI](https://github.com/issp-center-dev/Komega/workflows/CI/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
-[![Extended Test Matrix](https://github.com/issp-center-dev/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
-[![Quick Test](https://github.com/issp-center-dev/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
+[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
