@@ -21,10 +21,11 @@ This package provides the solver library based on Shifted-Krylov subspace method
    
 # Prerequisite
 
- * fortran compiler
- * BLAS library  
+ * Fortran compiler (gfortran 10, 11, or 12 recommended)
+ * BLAS library (reference BLAS or OpenBLAS)
  * LAPACK library (Used in the sample program)
  * MPI library (Optional)
+ * Autotools (autoconf, automake, libtool) for building from source
 
 # Docments
 
@@ -53,24 +54,62 @@ This package provides the solver library based on Shifted-Krylov subspace method
 
 # Install
 
+## Quick Start
+
 The simplest procedure is as follows:
 
- * Type `$ ./configure --prefix=install_dir; make; make install`
-   where `install_dir` should be replaced with the full path of the directory where
-   the library will be stored.
- * The following objects are generated in the directory specified by `install_dir`.
-   * In `install_dir/lib/`: Static and shared libraries.
-   * In `install_dir/include/`: Header file for C/C++.
-   * `install_dir/bin/Shiftk.out`: Sample program
+```bash
+$ ./configure --prefix=install_dir
+$ make
+$ make install
+```
+
+where `install_dir` should be replaced with the full path of the directory where
+the library will be stored.
+
+## Generated Files
+
+The following objects are generated in the directory specified by `install_dir`:
+ * In `install_dir/lib/`: Static and shared libraries (`libkomega.a`, `libkomega.so`)
+ * In `install_dir/include/`: Header file for C/C++ (`komega.h`)
+ * `install_dir/bin/ShiftK.out`: Sample program
+
+## Build Options
+
+```bash
+# Configure with OpenBLAS
+$ ./configure --prefix=install_dir --with-blas=openblas
+
+# Configure with reference BLAS (default)
+$ ./configure --prefix=install_dir
+```
 
 For more details, please see the manual.
 
 # Test of the software
 
- * Change the directory to `app/sample/denovo/` or `app/sample/from_file/`.
- * Type the command `$ install_dir/bin/ShiftK.out namelist.def`.
- * When the software works well, the files such as `dynamicalG.dat` will be generated.
- * The details of the file format of `namelist.def` is written in the manual.
+## Sample Applications
+
+### Denovo Sample (No input files required)
+```bash
+$ cd app/sample/denovo/
+$ install_dir/bin/ShiftK.out namelist.def lBiCG
+```
+
+### From File Sample (With input files)
+```bash
+$ cd app/sample/from_file/
+$ install_dir/bin/ShiftK.out namelist.def lBiCG
+```
+
+## Expected Output
+
+When the software works well, the following files will be generated:
+ * `output/dynamicalG.dat`: Dynamical Green's function data
+ * `output/ResVec.dat0`: Residual vector data
+ * `output/TriDiagComp.dat`: Tridiagonal components data
+
+The details of the file format of `namelist.def` is written in the manual.
 
 # Usage of libraries
 
@@ -91,19 +130,67 @@ etc.
 Add the `install_dir/lib` directry to the environment
 variable `LD_LIBRARY_PATH` to execute the file with dynamic link.
 
-# Test for libraries(Optional)
+# Test for libraries (Optional)
 
- * Move to the `test/` directory.
- * Type the command `$ ./solve_cc.x < complex_freq.in`.
- * The program is normally finished when Residual vector becomes sufficiently small. 
- * You can check other programs (`solve_rc.x`, `solve_cr.x`, `solve_rr.x`) in a similar way.
-   For `solve_cr.x` and `solve_rr.x, please use `real_freq.in` as an input file.
- * The parameters in `krylov.in`(you can modify the file name freely) are as follows
-   * `ndim`: The dimeinsion of the psuedo Hamiltonian
-   * `nl`: This parameter is used to test the projection.
-     The vectors are calculated from the target vector up to `nl(<=ndim)`th vector.
-   * `nz`: The number of the frequences to calculate.
-   * `itermax`: The maximum number of iterations.
-   * `threshold`: The threshold to judge the convergence.
-   * `rnd_seed`: The seed of random number to generate pseudo Hamiltonian.
-   * Write the value of each frequencies line by line after this namelist.
+## Running Library Tests
+
+Move to the `test/` directory and run the comprehensive test suite:
+
+```bash
+$ cd test/
+$ make
+$ ./run_tests.sh
+```
+
+## Individual Solver Tests
+
+You can test individual solvers:
+
+```bash
+# Complex-Complex solver
+$ ./solve_cc.x < complex_freq.in
+
+# Real-Complex solver  
+$ ./solve_rc.x < complex_freq.in
+
+# Complex-Real solver
+$ ./solve_cr.x < real_freq.in
+
+# Real-Real solver
+$ ./solve_rr.x < real_freq.in
+
+# QMR solvers
+$ ./solve_rc_qmr1.x < real_freq.in
+$ ./solve_rc_qmr2.x < real_freq.in
+```
+
+## Test Parameters
+
+The parameters in `krylov.in` (you can modify the file name freely) are as follows:
+ * `ndim`: The dimension of the pseudo Hamiltonian
+ * `nl`: This parameter is used to test the projection.
+   The vectors are calculated from the target vector up to `nl(<=ndim)`th vector.
+ * `nz`: The number of the frequencies to calculate.
+ * `itermax`: The maximum number of iterations.
+ * `threshold`: The threshold to judge the convergence.
+ * `rnd_seed`: The seed of random number to generate pseudo Hamiltonian.
+ * Write the value of each frequencies line by line after this namelist.
+
+# Continuous Integration
+
+This project uses GitHub Actions for automated testing across multiple environments:
+
+## Tested Environments
+ * **Ubuntu 22.04**: gfortran-10 (reference BLAS), gfortran-11 (OpenBLAS)
+ * **Ubuntu Latest**: gfortran-12 (OpenBLAS)
+
+## Test Coverage
+ * **Sample Applications**: Denovo and from_file samples
+ * **Library Tests**: All solver algorithms (BiCG, COCG, CG, QMR)
+ * **Compiler Compatibility**: Multiple gfortran versions
+ * **BLAS Libraries**: Both reference BLAS and OpenBLAS
+
+## Build Status
+[![CI](https://github.com/issp-center-dev/Komega/workflows/CI/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
+[![Extended Test Matrix](https://github.com/issp-center-dev/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
+[![Quick Test](https://github.com/issp-center-dev/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/issp-center-dev/Komega/actions)
