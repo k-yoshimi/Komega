@@ -7,7 +7,7 @@
 ## プロジェクト情報
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Language: Fortran](https://img.shields.io/badge/Language-Fortran-orange.svg)](https://fortran-lang.org/)
-[![Platform: Linux, macOS](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/k-yoshimi/Komega)
+[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://github.com/k-yoshimi/Komega)
 [![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-green.svg)](https://github.com/k-yoshimi/Komega/releases)
 
 ## ビルドステータス
