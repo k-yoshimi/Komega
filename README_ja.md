@@ -4,7 +4,7 @@
 
 <img src="doc/figs/komega.png" width="300">
 
-# What ? 
+# What is Kω ? 
 
 Shifted-Krylov部分空間法に基づくソルバーライブラリと,
 それを用いてHamiltonianと励起状態ベクトルから動的Green関数を計算するミニアプリである.
@@ -28,7 +28,7 @@ Shifted-Krylov部分空間法に基づくソルバーライブラリと,
  * BLASライブラリ
  * LAPACKライブラリ(ミニアプリのみ使用)
  * MPIライブラリ(Optional)
- 
+
 # Documents
 
  * Manual for the Library
@@ -37,6 +37,18 @@ Shifted-Krylov部分空間法に基づくソルバーライブラリと,
  * Manual for the sample program
    * Japanese ([HTML](https://issp-center-dev.github.io/Komega/software/ja/_build/html/index.html)/[PDF](https://issp-center-dev.github.io/Komega/software/ja/_build/latex/shiftk.pdf))
    * English ([HTML](https://issp-center-dev.github.io/Komega/software/en/_build/html/index.html)/[PDF](https://issp-center-dev.github.io/Komega/software/en/_build/latex/shiftk.pdf))
+
+# License
+
+GNU LESSER GENERAL PUBLIC LICENSE Version 3
+
+© 2016- The University of Tokyo. All rights reserved.
+
+本ソフトウェアは2016年度 東京大学物性研究所 ソフトウェア高度化プロジェクトの支援を受け開発された。
+
+(＊) 引用論文
+
+[“Kω — Open-source library for the shifted Krylov subspace method of the form (zI−H)x=b”, Takeo Hoshi, Mitsuaki Kawamura, Kazuyoshi Yoshimi, Yuichi Motoyama, Takahiro Misawa, Youhei Yamaji, Synge Todo, Naoki Kawashima, Tomohiro Sogabe, Computer Physics Communications, Volume 258, January 2021, 107536.](https://www.sciencedirect.com/science/article/pii/S0010465520302551)
 
 # Directory Tree
 

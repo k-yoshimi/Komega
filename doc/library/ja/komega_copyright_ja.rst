@@ -72,27 +72,16 @@ Autoconfの使用に支障がある場合には, 以下の簡易版のMakefile�
    
 .. _lgplicense:
       
-Lesser General Public License
------------------------------
+ライセンス
+==========
+
+GNU LESSER GENERAL PUBLIC LICENSE Version 3
 
 *© 2016- The University of Tokyo. All rights reserved.*
 
-| This software is developed under the support of
-| "*Project for advancement of software usability in materials science*" by The
-| Institute for Solid State Physics, The University of Tokyo.
-|
-| This library is free software; you can redistribute it and/or
-| modify it under the terms of the GNU Lesser General Public
-| License as published by the Free Software Foundation; either
-| version 2.1 of the License, or (at your option) any later version.
-| This library is distributed in the hope that it will be useful,
-| but WITHOUT ANY WARRANTY; without even the implied warranty of
-| MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-| Lesser General Public License for more details.
-|
-| You should have received a copy of the GNU Lesser General Public
-| License along with this library; if not, write to the Free Software
-| Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-|
-| For more details, See 'COPYING.LESSER' in the root directory of this library.
+本ライブラリは2016年度 東京大学物性研究所 ソフトウェア高度化プロジェクトの支援を受け開発されています。
 
+
+(＊) Kωを引用する際には、以下の論文を引用してください。
+
+`“Kω — Open-source library for the shifted Krylov subspace method of the form (zI−H)x=b”, Takeo Hoshi, Mitsuaki Kawamura, Kazuyoshi Yoshimi, Yuichi Motoyama, Takahiro Misawa, Youhei Yamaji, Synge Todo, Naoki Kawashima, Tomohiro Sogabe, Computer Physics Communications, Volume 258, January 2021, 107536. <https://www.sciencedirect.com/science/article/pii/S0010465520302551>`_

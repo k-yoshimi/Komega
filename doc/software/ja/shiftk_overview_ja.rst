@@ -1,8 +1,7 @@
 概要
 ====
 
-本資料はISSP Math
-Libraryの内の, Krylov部分空間法に基づくシフト線形方程式群ライブラリ
+本資料はISSP Math Libraryの内の, Krylov部分空間法に基づくシフト線形方程式群ライブラリ
 :math:`K\omega` を用いた Green関数計算用ミニアプリのマニュアルです. 
 ライブラリに関する使用方法については, " :math:`K\omega` マニュアル"に記載しました. 
 
