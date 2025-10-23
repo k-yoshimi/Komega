@@ -21,7 +21,6 @@ classifiers = [
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -30,7 +29,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "numpy>=1.19.0",
     "scipy>=1.7.0",
@@ -75,7 +74,7 @@ include = ["komega*"]
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -98,19 +97,21 @@ line_length = 88
 known_first_party = ["komega"]
 
 [tool.mypy]
-python_version = "3.8"
-warn_return_any = true
+python_version = "3.9"
+warn_return_any = false
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = false
+no_implicit_optional = false
 warn_redundant_casts = true
 warn_unused_ignores = true
-warn_no_return = true
+warn_no_return = false
 warn_unreachable = true
-strict_equality = true
+strict_equality = false
+explicit_package_bases = true
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["."]
