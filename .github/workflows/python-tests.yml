@@ -3,14 +3,8 @@ name: Python Library Tests
 on:
   push:
     branches: [ python, master, develop ]
-    paths:
-      - 'python_komega/**'
-      - '.github/workflows/python-tests.yml'
   pull_request:
     branches: [ python, master, develop ]
-    paths:
-      - 'python_komega/**'
-      - '.github/workflows/python-tests.yml'
 
 jobs:
   python-tests:
