@@ -231,8 +231,7 @@ class KomegaCGR:
         # Update α
         self.vals_r.alpha_old = self.vals_r.alpha
         alpha_denom = (
-            ddotMPI(v2, v12)
-            - self.vals_r.beta * self.vals_r.rho / self.vals_r.alpha
+            ddotMPI(v2, v12) - self.vals_r.beta * self.vals_r.rho / self.vals_r.alpha
         )
 
         if abs(alpha_denom) < self.params.almost0:
