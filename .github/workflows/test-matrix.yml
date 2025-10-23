@@ -83,7 +83,7 @@ jobs:
           ./configure --prefix=$PWD/install
         fi
 
-    - name: Build
+    - name: Build and Install
       run: |
         # Build with verbose output to see detailed errors
         echo "=== Building with parallel jobs ==="
@@ -96,6 +96,9 @@ jobs:
             make -j1 V=1
           }
         }
+        
+        echo "=== Installing libraries and applications ==="
+        make install
         
         # Check if ShiftK.out was built in app/src
         echo "=== Checking if ShiftK.out was built ==="
@@ -125,11 +128,6 @@ jobs:
           echo "Checking build logs for errors..."
           echo "Build completed but ShiftK.out was not created"
         fi
-
-    - name: Install
-      run: |
-        echo "=== Installing libraries and applications ==="
-        make install
         
         # Check if ShiftK.out was installed
         echo "=== Checking installation ==="
