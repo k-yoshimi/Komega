@@ -193,7 +193,7 @@ class KomegaBiCG:
         
         # Update ρ and β
         rho_old = self.vals_c.rho
-        self.vals_c.rho = zdotcMPI(self.params.ndim, v4, v2)
+        self.vals_c.rho = zdotcMPI(v4, v2)
         
         if self.params.iter == 1:
             self.vals_c.beta = 0.0 + 0.0j
@@ -206,7 +206,7 @@ class KomegaBiCG:
         
         # Update α
         self.vals_c.alpha_old = self.vals_c.alpha
-        alpha_denom = zdotcMPI(self.params.ndim, v4, v12) - self.vals_c.beta * self.vals_c.rho / self.vals_c.alpha
+        alpha_denom = zdotcMPI(v4, v12) - self.vals_c.beta * self.vals_c.rho / self.vals_c.alpha
         
         if abs(alpha_denom) < self.params.almost0:
             status[1] = 2
@@ -241,7 +241,7 @@ class KomegaBiCG:
         self.seed_switch(v2, v4, status)
         
         # Check convergence
-        v12[0] = np.sqrt(zdotcMPI(self.params.ndim, v2, v2))
+        v12[0] = np.sqrt(zdotcMPI(v2, v2))
         self.params.resnorm = np.real(v12[0])
         
         # Update convergence flags

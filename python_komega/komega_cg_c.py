@@ -187,7 +187,7 @@ class KomegaCGC:
         
         # Update ρ and β
         rho_old = self.vals_r.rho
-        self.vals_r.rho = np.real(zdotcMPI(self.params.ndim, v2, v2))
+        self.vals_r.rho = np.real(zdotcMPI(v2, v2))
         
         if self.params.iter == 1:
             self.vals_r.beta = 0.0
@@ -199,7 +199,7 @@ class KomegaCGC:
         
         # Update α
         self.vals_r.alpha_old = self.vals_r.alpha
-        alpha_denom = np.real(zdotcMPI(self.params.ndim, v2, v12)) - self.vals_r.beta * self.vals_r.rho / self.vals_r.alpha
+        alpha_denom = np.real(zdotcMPI(v2, v12)) - self.vals_r.beta * self.vals_r.rho / self.vals_r.alpha
         
         if abs(alpha_denom) < self.params.almost0:
             status[1] = 2
@@ -226,7 +226,7 @@ class KomegaCGC:
         self.seed_switch(v2, status)
         
         # Check convergence
-        v12[0] = np.sqrt(np.real(zdotcMPI(self.params.ndim, v2, v2)))
+        v12[0] = np.sqrt(np.real(zdotcMPI(v2, v2)))
         self.params.resnorm = np.real(v12[0])
         
         # Update convergence flags
