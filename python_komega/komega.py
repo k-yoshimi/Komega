@@ -102,6 +102,9 @@ class KomegaSolver:
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
 
+        if self.solver is None:
+            raise RuntimeError("Solver not initialized")
+        
         if self.solver_type == "bicg":
             self.solver.update(*args, **kwargs)
         elif self.solver_type in ["cg_r", "cg_c", "cocg"]:
@@ -122,6 +125,9 @@ class KomegaSolver:
         """
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
+        
+        if self.solver is None:
+            raise RuntimeError("Solver not initialized")
 
         return self.solver.get_coefficients()
 
@@ -136,6 +142,9 @@ class KomegaSolver:
         """
         if not self.initialized:
             raise RuntimeError("Solver not initialized")
+        
+        if self.solver is None:
+            raise RuntimeError("Solver not initialized")
 
         return self.solver.get_vectors()
 
@@ -149,6 +158,9 @@ class KomegaSolver:
             Residual norms
         """
         if not self.initialized:
+            raise RuntimeError("Solver not initialized")
+        
+        if self.solver is None:
             raise RuntimeError("Solver not initialized")
 
         return self.solver.get_residual()

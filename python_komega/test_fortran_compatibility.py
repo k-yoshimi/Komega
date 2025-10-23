@@ -69,10 +69,10 @@ class FortranTestSystem:
         np.random.seed(rnd_seed)
 
         # Initialize arrays
-        self.ham = None
-        self.rhs = None
-        self.z = None
-        self.x = None
+        self.ham: Optional[np.ndarray] = None
+        self.rhs: Optional[np.ndarray] = None
+        self.z: Optional[np.ndarray] = None
+        self.x: Optional[np.ndarray] = None
 
     def generate_complex_system(
         self, z_frequencies: List[complex]
