@@ -11,21 +11,26 @@ Python port created for verification and testing purposes.
 from setuptools import setup, find_packages
 import os
 
+
 # Read the README file
 def read_readme():
-    readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
+    readme_path = os.path.join(os.path.dirname(__file__), "README.md")
     if os.path.exists(readme_path):
-        with open(readme_path, 'r', encoding='utf-8') as f:
+        with open(readme_path, "r", encoding="utf-8") as f:
             return f.read()
     return "Komega Python Library - A library for solving linear systems in materials science"
 
+
 # Read requirements
 def read_requirements():
-    requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+    requirements_path = os.path.join(os.path.dirname(__file__), "requirements.txt")
     if os.path.exists(requirements_path):
-        with open(requirements_path, 'r', encoding='utf-8') as f:
-            return [line.strip() for line in f if line.strip() and not line.startswith('#')]
-    return ['numpy>=1.19.0', 'scipy>=1.7.0']
+        with open(requirements_path, "r", encoding="utf-8") as f:
+            return [
+                line.strip() for line in f if line.strip() and not line.startswith("#")
+            ]
+    return ["numpy>=1.19.0", "scipy>=1.7.0"]
+
 
 setup(
     name="komega-python",

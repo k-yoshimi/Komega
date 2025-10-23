@@ -31,44 +31,44 @@ from komega_cocg import KomegaCOCG, get_global_cocg
 def test_solver_creation():
     """Test solver creation and basic functionality."""
     print("Testing solver creation...")
-    
+
     # Test available solvers
-    solvers = ['bicg', 'cg_r', 'cg_c', 'cocg']
+    solvers = ["bicg", "cg_r", "cg_c", "cocg"]
     print(f"Available solvers: {solvers}")
-    
+
     # Test solver creation
     for solver_type in solvers:
         try:
-            if solver_type == 'bicg':
+            if solver_type == "bicg":
                 solver = get_global_bicg()
-            elif solver_type == 'cg_r':
+            elif solver_type == "cg_r":
                 solver = get_global_cg_r()
-            elif solver_type == 'cg_c':
+            elif solver_type == "cg_c":
                 solver = get_global_cg_c()
-            elif solver_type == 'cocg':
+            elif solver_type == "cocg":
                 solver = get_global_cocg()
             print(f"✓ Successfully created {solver_type} solver")
         except Exception as e:
             print(f"✗ Failed to create {solver_type} solver: {e}")
-    
+
     print("Solver creation test completed.\n")
 
 
 def test_parameter_initialization():
     """Test parameter initialization."""
     print("Testing parameter initialization...")
-    
+
     # Test parameters
     ndim = 10
     nl = 5
     nz = 3
     itermax = 100
     threshold = 1e-6
-    
+
     # Test different frequency arrays
     z_real = np.array([1.0, 2.0, 3.0])
     z_complex = np.array([1.0 + 0.1j, 2.0 + 0.2j, 3.0 + 0.3j])
-    
+
     print(f"Test parameters:")
     print(f"  ndim = {ndim}")
     print(f"  nl = {nl}")
@@ -77,58 +77,58 @@ def test_parameter_initialization():
     print(f"  threshold = {threshold}")
     print(f"  z_real = {z_real}")
     print(f"  z_complex = {z_complex}")
-    
+
     print("Parameter initialization test completed.\n")
 
 
 def test_math_operations():
     """Test mathematical operations."""
     print("Testing mathematical operations...")
-    
+
     math_ops = get_global_math()
-    
+
     # Test vectors
     n = 5
     x_real = np.random.rand(n)
     y_real = np.random.rand(n)
     x_complex = np.random.rand(n) + 1j * np.random.rand(n)
     y_complex = np.random.rand(n) + 1j * np.random.rand(n)
-    
+
     # Test dot products
     dot_real = math_ops.ddot(x_real, y_real)
     dotc_complex = math_ops.zdotc(x_complex, y_complex)
     dotu_complex = math_ops.zdotu(x_complex, y_complex)
-    
+
     print(f"Real dot product: {dot_real}")
     print(f"Complex conjugate dot product: {dotc_complex}")
     print(f"Complex dot product: {dotu_complex}")
-    
+
     # Test scaling
     alpha_real = 2.0
     alpha_complex = 1.0 + 1j
-    
+
     x_scaled = x_real.copy()
     math_ops.dscal(alpha_real, x_scaled)
     print(f"Real scaling: {x_scaled}")
-    
+
     x_complex_scaled = x_complex.copy()
     math_ops.zscal(alpha_complex, x_complex_scaled)
     print(f"Complex scaling: {x_complex_scaled}")
-    
+
     print("Mathematical operations test completed.\n")
 
 
 def test_solver_initialization():
     """Test solver initialization."""
     print("Testing solver initialization...")
-    
+
     # Test parameters
     ndim = 10
     nl = 5
     nz = 3
     itermax = 100
     threshold = 1e-6
-    
+
     # Test real CG solver
     try:
         solver = get_global_cg_r()
@@ -139,7 +139,7 @@ def test_solver_initialization():
         print(f"  Solution array dtype: {x.dtype}")
     except Exception as e:
         print(f"✗ Real CG solver initialization failed: {e}")
-    
+
     # Test complex BiCG solver
     try:
         solver = get_global_bicg()
@@ -150,14 +150,14 @@ def test_solver_initialization():
         print(f"  Solution array dtype: {x.dtype}")
     except Exception as e:
         print(f"✗ Complex BiCG solver initialization failed: {e}")
-    
+
     print("Solver initialization test completed.\n")
 
 
 def test_value_storage():
     """Test value storage modules."""
     print("Testing value storage modules...")
-    
+
     # Test real values
     try:
         vals_r = get_global_vals_r()
@@ -168,7 +168,7 @@ def test_value_storage():
         print(f"  π old values: {vals_r.get_pi_old_values()}")
     except Exception as e:
         print(f"✗ Real values initialization failed: {e}")
-    
+
     # Test complex values
     try:
         vals_c = get_global_vals_c()
@@ -179,7 +179,7 @@ def test_value_storage():
         print(f"  π old values: {vals_c.get_pi_old_values()}")
     except Exception as e:
         print(f"✗ Complex values initialization failed: {e}")
-    
+
     print("Value storage test completed.\n")
 
 
@@ -189,24 +189,25 @@ def main():
     print("Komega Python Library Test Suite")
     print("=" * 60)
     print()
-    
+
     try:
         test_solver_creation()
         test_parameter_initialization()
         test_math_operations()
         test_solver_initialization()
         test_value_storage()
-        
+
         print("=" * 60)
         print("All tests completed successfully!")
         print("=" * 60)
-        
+
     except Exception as e:
         print(f"Test suite failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
-    
+
     return 0
 
 
