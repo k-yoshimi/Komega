@@ -346,11 +346,11 @@ PROGRAM solve_cc
      !
      ! Generate Right Hand Side Vector
      !
+     CALL komega_BiCG_init(ndim, nl, nz, x, z, itermax, threshold)
+     !
      v2(1:ndim) = rhs(1:ndim)
      v4(1:ndim) = CONJG(v2(1:ndim))
      !v4(1:ndim) = v2(1:ndim)
-     !
-     CALL komega_BiCG_init(ndim, nl, nz, x, z, itermax, threshold)
      !
   END IF
   !

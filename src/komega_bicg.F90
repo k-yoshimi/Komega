@@ -102,10 +102,12 @@ SUBROUTINE komega_BICG_shiftedeqn(r_l, x)
      !
      IF(lz_conv(iz)) cycle
      !
-     pi_new = (1d0 + alpha * (z(iz) - z_seed)) * pi(iz) &
-     &      - alpha * beta / alpha_old * (pi_old(iz) - pi(iz))
-     p(1:nl,iz) = r_l(1:nl) / pi(iz) &
-     &          + (pi_old(iz) / pi(iz))**2 * beta * p(1:nl,iz)
+       pi_new = (1d0 + alpha * (z(iz) - z_seed)) * pi(iz) &
+       &      - alpha * beta / alpha_old * (pi_old(iz) - pi(iz))
+       !
+       p(1:nl,iz) = r_l(1:nl) / pi(iz) &
+       &          + (pi_old(iz) / pi(iz))**2 * beta * p(1:nl,iz)
+     !
      CALL zaxpy(nl, pi(iz)/ pi_new * alpha, p(1:nl,iz), 1, x(1:nl,iz), 1)
      pi_old(iz) = pi(iz)
      pi(iz) = pi_new

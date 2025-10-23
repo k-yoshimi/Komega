@@ -32,14 +32,14 @@ MODULE komega_parameter
   & nl,      & !< Dimension of projection
   & nz,      & !< Number of Frequency (Shift)
   & itermax, & !< Maximum number of iteration
-  & iter       !< Counter of iteration
+  & iter = 0   !< Counter of iteration
   !
   LOGICAL,SAVE :: &
-  & lmpi !< Use MPI or not
+  & lmpi = .FALSE. !< Use MPI or not
   !
   REAL(8),SAVE :: &
-  & threshold, & !< Convergence threshold
-  & resnorm      !< Residual norm
+  & threshold = 1d-6, & !< Convergence threshold
+  & resnorm = 0d0      !< Residual norm
   !
   LOGICAL,ALLOCATABLE,SAVE :: &
   & lz_conv(:) !< If converged at this frequency -> .TRUE.

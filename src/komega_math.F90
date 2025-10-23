@@ -124,7 +124,8 @@ FUNCTION zdotcMPI(n,zx,zy) RESULT(prod)
 #if defined(__NO_ZDOT)
   prod = DOT_PRODUCT(zx,zy)
 #else
-  prod = zdotc(n,zx,1,zy,1)
+  ! Use DOT_PRODUCT instead of zdotc for safety
+  prod = DOT_PRODUCT(zx,zy)
 #endif
   !
 #if defined(__MPI)
