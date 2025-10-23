@@ -125,12 +125,22 @@ jobs:
         fi
         
         echo "Using ShiftK: $SHIFTK_PATH"
+        
+        # Get absolute path before changing directory
+        if [ -f "$SHIFTK_PATH" ] && [ -x "$SHIFTK_PATH" ]; then
+          ABSOLUTE_SHIFTK_PATH=$(realpath "$SHIFTK_PATH" 2>/dev/null || echo "$SHIFTK_PATH")
+          echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
+          echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        else
+          echo "ERROR: ShiftK executable not accessible at: $SHIFTK_PATH"
+          echo "File exists: $([ -f "$SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          echo "File executable: $([ -x "$SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+          exit 1
+        fi
+        
         cd app/sample/denovo
-        # Use absolute path to avoid path issues
-        ABSOLUTE_SHIFTK_PATH=$(realpath "$PWD/../../$SHIFTK_PATH" 2>/dev/null || echo "$PWD/../../$SHIFTK_PATH")
-        echo "Absolute path: $ABSOLUTE_SHIFTK_PATH"
-        echo "File exists: $([ -f "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
-        echo "File executable: $([ -x "$ABSOLUTE_SHIFTK_PATH" ] && echo "YES" || echo "NO")"
+        echo "Current directory: $(pwd)"
         
         if [ -f "$ABSOLUTE_SHIFTK_PATH" ] && [ -x "$ABSOLUTE_SHIFTK_PATH" ]; then
           timeout 30s "$ABSOLUTE_SHIFTK_PATH" namelist.def || echo "Sample test completed"
