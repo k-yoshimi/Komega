@@ -4,6 +4,11 @@
 
 <img src="doc/figs/komega.png" width="300">
 
+## Build Status
+[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
+
 # What is Kω? 
 
 This package provides the solver library based on Shifted-Krylov subspace method and the software to calculate dynamical Green function by inputting the Hamiltonian and the vector of the excited state.
@@ -203,8 +208,3 @@ This project uses GitHub Actions for automated testing across multiple environme
  * **Library Tests**: All solver algorithms (BiCG, COCG, CG, QMR)
  * **Compiler Compatibility**: Multiple gfortran versions
  * **BLAS Libraries**: Both reference BLAS and OpenBLAS
-
-## Build Status
-[![CI](https://github.com/k-yoshimi/Komega/workflows/CI/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
-[![Extended Test Matrix](https://github.com/k-yoshimi/Komega/workflows/Extended%20Test%20Matrix/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
-[![Quick Test](https://github.com/k-yoshimi/Komega/workflows/Quick%20Test/badge.svg)](https://github.com/k-yoshimi/Komega/actions)
