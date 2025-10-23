@@ -27,8 +27,8 @@ MODULE solve_rc_qmr1_vals
   & ndim,    & ! Size of Hilvert space
   & nz,      & ! Number of frequencies
   & nl,      & ! Number of Left vector
-  & itermax, & ! Max. number of iteraction
-  & iter_old   ! Number of iteraction of previous run
+  & itermax, & ! Max. number of iteration
+  & iter_old   ! Number of iteration of previous run
   !
   REAL(8),SAVE :: &
   & threshold ! Convergence Threshold
@@ -108,8 +108,8 @@ SUBROUTINE generate_system()
   COMPLEX(8) :: ham0(ndim,ndim)
   CHARACTER(100) :: cndim, form
   !
-  CALL random_seed(size=seedsize) !サイズ取得
-  ALLOCATE(seed(seedsize)) !配列確保
+  CALL random_seed(size=seedsize) !Get size
+  ALLOCATE(seed(seedsize)) !Allocate array
   seed(:) = rnd_seed
   CALL random_seed(put=seed)
   !

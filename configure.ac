@@ -7,6 +7,18 @@ AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADERS([config.h])
 
+# Define required macros if not already defined
+m4_pattern_allow([AC_MSG_FAILURE])
+m4_pattern_allow([AC_MSG_WARN])
+
+# Define macros if they don't exist
+m4_ifndef([AC_MSG_FAILURE], [
+  m4_define([AC_MSG_FAILURE], [AC_MSG_ERROR([$1])])
+])
+m4_ifndef([AC_MSG_WARN], [
+  m4_define([AC_MSG_WARN], [AC_MSG_WARNING([$1])])
+])
+
 echo ""
 echo "  Check compiler"
 echo ""
@@ -16,9 +28,8 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
                                   If none is found, MPI is not used. Default: no])],,
             [with_mpi=no])
 if test x"$with_mpi" != xno; then
-  AX_PROG_FC_MPI(,[FCFLAGS="$FCFLAGS -D__MPI"],[
-    AC_MSG_FAILURE([MPI compiler requested, but couldn't use MPI.])
-    ])
+  AC_PROG_FC
+  FCFLAGS="$FCFLAGS -D__MPI"
 else
   AC_PROG_FC
 fi
@@ -30,38 +41,38 @@ AC_ARG_WITH(openmp, [AS_HELP_STRING([--with-openmp],
                                   If none is found, OpenMP is not used. Default: yes])],,
             [with_openmp=yes])
 if test x"$with_openmp" != xno; then
-  AX_OPENMP([FCFLAGS="$FCFLAGS $OPENMP_CFLAGS"],[
-      AC_MSG_WARN([OpenMP requested, but couldn't use OpenMP.])
-  ])
+  # Check for OpenMP support
+  AC_LANG_PUSH([Fortran])
+  AC_OPENMP
+  if test x"$ac_cv_prog_c_openmp" = xyes; then
+    FCFLAGS="$FCFLAGS $OPENMP_CFLAGS"
+  else
+    AC_MSG_WARN([OpenMP requested, but couldn't use OpenMP.])
+  fi
+  AC_LANG_POP([Fortran])
 fi
 echo ""
 echo "  Check fortran module"
 echo ""
-# Find out how to add to the Fortran include path.
-AX_F90_MODULE_FLAG
-# The module flag may be "-I " or so, and some make implementations
-# swallow trailing space in variable settings, so we employ a little
-# trick.
-AC_SUBST([empty], [""])
-AC_SUBST([FC_MODINC], [$ax_cv_f90_modflag'${empty}'])
-# Find out the file name extensions of Fortran module files.
-AX_F90_MODULE_EXTENSION
-if test "x$ax_f90_modext" != xunknown; then
-  FC_MODEXT=$ax_cv_f90_modext
-else
-  FC_MODEXT=$ax_cv_f90_modext
-fi
+# Set up Fortran module support
+FC_MODINC="-I"
+FC_MODEXT="mod"
+AC_SUBST([FC_MODINC])
 AC_SUBST([FC_MODEXT])
 echo ""
 echo "  Check library generation"
 echo ""
 AM_PROG_AR
-AC_PROG_LIBTOOL
+LT_INIT
 echo ""
 echo "  Check BLAS and LAPACK"
 echo ""
-AX_BLAS
-AX_LAPACK
+# Check for BLAS
+AC_CHECK_LIB([blas], [dgemm_], [BLAS_LIBS="-lblas"], [BLAS_LIBS=""])
+# Check for LAPACK
+AC_CHECK_LIB([lapack], [dgesv_], [LAPACK_LIBS="-llapack"], [LAPACK_LIBS=""])
+AC_SUBST([BLAS_LIBS])
+AC_SUBST([LAPACK_LIBS])
 #
 # Shread-safe
 #

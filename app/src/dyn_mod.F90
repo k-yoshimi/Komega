@@ -202,7 +202,7 @@ SUBROUTINE dyn()
              STOP
         END IF
      ELSE
-        IF(TRIM(solver) == 'bicg') THEN
+        IF(TRIM(solver) == 'lBiCG') THEN
 #if defined(__MPI)
            CALL komega_BiCG_init(ndim, nl, nomega, x_l, z, 0,        threshold, MPI_COMM_WORLD)
 #else
@@ -436,14 +436,14 @@ SUBROUTINE dyn()
   !
   ! Deallocate all intrinsic vectors
   !
-  IF(TRIM(solver) == 'bicg') THEN
+  IF(TRIM(solver) == 'lBiCG') THEN
      CALL komega_BiCG_finalize()
-  ELSE IF (TRIM(solver) == 'cocg') THEN
+  ELSE IF (TRIM(solver) == 'COCG') THEN
      CALL komega_COCG_finalize()
   ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
-     CALL komega_shifted_qmr_sym_finalize()
-  ELSE IF (TRIM(solver) == 'shifted_qmr_sym') THEN
-     CALL komega_shifted_qmr_sym_finalize()
+      CALL komega_shifted_qmr_sym_finalize()
+  ELSE IF (TRIM(solver) == 'shifted_qmr_sym_b') THEN
+      CALL komega_shifted_qmr_sym_b_finalize()
   END IF
   !
   ! Output to a file
